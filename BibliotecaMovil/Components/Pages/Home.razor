@@ -1,0 +1,65 @@
+@page "/"
+
+<div style="background-color:#777FF5; min-height:100vh; display:flex; flex-direction:column;">
+    <!-- Header -->
+    <div style="padding:40px 20px 20px 20px; display:grid; grid-template-columns:1fr auto; grid-row-gap:10px;">
+        <div style="grid-column:1 / span 2;">
+            <div style="font-size:24px; font-weight:bold;">Biblioteca Movil</div>
+        </div>
+
+        <div>
+            <div style="display:flex; flex-direction:column; gap:4px;">
+                <div style="font-size:18px; font-weight:bold;">Hola &lt;Usuario&gt;</div>
+                <div style="font-size:14px;">Fecha Actual</div>
+            </div>
+        </div>
+
+        <!-- Avatar + menú -->
+        <div style="justify-self:end; display:flex; align-items:flex-start; gap:10px;">
+            <div style="width:48px; height:48px; border-radius:24px; background:white; display:flex; align-items:center; justify-content:center; margin-right:10px;">
+                <img src="images/avatar_placeholder.png" alt="Avatar" style="width:40px; height:40px;" />
+            </div>
+            <div style="background:#0050FF; padding:10px 8px; display:flex; flex-direction:column; gap:4px; align-self:flex-start;">
+                <div style="height:2px; width:24px; background:black;"></div>
+                <div style="height:2px; width:24px; background:black;"></div>
+                <div style="height:2px; width:24px; background:black;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenido -->
+    <div style="background:white; flex:1; overflow:auto;">
+        <div style="padding:20px; display:flex; flex-direction:column; gap:24px;">
+
+            <!-- Stats -->
+            <div>
+                <div style="font-size:18px; font-weight:bold; margin-bottom:12px;">Tus estadisticas</div>
+
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+                    <span style="font-size:24px;">📚</span>
+                    <span>Libros Activos:</span>
+                </div>
+
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+                    <span style="font-size:24px;">📅</span>
+                    <span>Por devolver</span>
+                </div>
+
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:24px;">💬</span>
+                    <span>Reseñas Hechas</span>
+                </div>
+            </div>
+
+            <!-- Atajos -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; grid-row-gap:20px; grid-column-gap:20px;">
+                <button style="height:90px; background:#0050FF; color:black; border:none; font-size:16px;">Libros</button>
+                <button style="height:90px; background:#0050FF; color:black; border:none; font-size:16px;">Prestamos</button>
+                <button style="height:90px; background:#0050FF; color:black; border:none; font-size:16px;">Reseñas</button>
+                <button style="height:90px; background:#0050FF; color:black; border:none; font-size:16px;">Favoritos</button>
+            </div>
+
+            <div style="font-size:18px; font-weight:bold;">Novedades</div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,38 @@
+@page "/ejemplares"
+
+<div style="background:#777FF5; min-height:100vh; display:flex; flex-direction:column;">
+    <div style="padding:40px 20px 10px 20px; display:grid; grid-template-columns:1fr auto auto; column-gap:10px;">
+        <div style="grid-column:1 / span 3; font-size:26px; font-weight:bold;">Ejemplares</div>
+        <div style="margin-top:20px; width:40px; height:40px; background:#0050FF;"></div>
+        <div style="margin-top:20px; background:#0050FF; padding:8px 6px; display:flex; flex-direction:column; gap:3px; justify-self:end;">
+            <div style="height:2px; width:22px; background:black;"></div>
+            <div style="height:2px; width:22px; background:black;"></div>
+            <div style="height:2px; width:22px; background:black;"></div>
+        </div>
+    </div>
+    <div style="flex:1; background:white; overflow:auto;">
+        <div style="padding:10px 20px;">Ejemplares de &lt;Libro.Nombre&gt;</div>
+        <div style="padding:0 20px;">
+            <div style="display:grid; grid-template-columns:1.5fr 1fr; font-weight:bold; padding:10px 0;">
+                <div>Codigo inventario</div>
+                <div>Estado</div>
+            </div>
+            @for (int i = 0; i < 4; i++)
+            {
+                <div style="display:grid; grid-template-columns:1.5fr 1fr; padding:6px 0; border-bottom:1px solid #EEE;">
+                    <div>COD-00@(i+1)</div>
+                    <div>DISPONIBLE</div>
+                </div>
+            }
+        </div>
+        <div style="background:#777FF5; padding:10px 20px; margin-top:10px; font-weight:bold;">
+            Codigo inventario
+        </div>
+        <div style="padding:16px 20px 30px 20px;">
+            <div>Codigo</div>
+            <input style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:12px;" />
+            <div>Estado</div>
+            <input style="width:100%; height:34px; background:#DDDDDD; border:none;" />
+        </div>
+    </div>
+</div>

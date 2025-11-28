@@ -1,0 +1,36 @@
+@page "/editoriales"
+
+<div style="background:#777FF5; min-height:100vh; display:flex; flex-direction:column;">
+    <div style="padding:40px 20px 10px 20px; display:grid; grid-template-columns:1fr auto; align-items:center;">
+        <div style="font-size:26px; font-weight:bold;">Editorial</div>
+        <div style="background:#0050FF; padding:8px 6px; display:flex; flex-direction:column; gap:3px;">
+            <div style="height:2px; width:22px; background:black;"></div>
+            <div style="height:2px; width:22px; background:black;"></div>
+            <div style="height:2px; width:22px; background:black;"></div>
+        </div>
+    </div>
+    <div style="flex:1; background:white; overflow:auto;">
+        <div style="padding:0 20px 20px 20px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; font-weight:bold; padding:10px 0;">
+                <div>Nombre</div>
+                <div>Ciudad</div>
+            </div>
+            @for (int i = 0; i < 3; i++)
+            {
+                <div style="display:grid; grid-template-columns:1fr 1fr; padding:6px 0; border-bottom:1px solid #EEE;">
+                    <div>Editorial @(i+1)</div>
+                    <div>Ciudad @(i+1)</div>
+                </div>
+            }
+        </div>
+        <div style="background:#777FF5; padding:10px 20px; color:black; font-weight:bold;">
+            Formulario &lt;Accion&gt;
+        </div>
+        <div style="padding:16px 20px 30px 20px;">
+            <div>Nombre</div>
+            <input style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:12px;" />
+            <div>Ciudad</div>
+            <input style="width:100%; height:34px; background:#DDDDDD; border:none;" />
+        </div>
+    </div>
+</div>
