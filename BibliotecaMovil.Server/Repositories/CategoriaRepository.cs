@@ -1,23 +1,41 @@
+using BibliotecaMovil.Server.Data;
 using BibliotecaMovil.Shared.DTOs;
 using BibliotecaMovil.Shared.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace BibliotecaMovil.Server.Repositories;
 
 public class CategoriaRepository : ICategoriaRepository
 {
-    private readonly List<CategoriaDto> _categorias = new()
-    {
-        new CategoriaDto { IdCategoria = 1, Nombre = "Ficción", Descripcion = "Libros de ficción" },
-        new CategoriaDto { IdCategoria = 2, Nombre = "Ciencia", Descripcion = "Libros científicos" }
-    };
+    private readonly BibliotecaDbContext _context;
 
-    public Task<List<CategoriaDto>> GetAllCategoriasAsync()
+    public CategoriaRepository(BibliotecaDbContext context)
     {
-        return Task.FromResult(_categorias);
+        _context = context;
     }
 
-    public Task<CategoriaDto?> GetCategoriaByIdAsync(int id)
+    public async Task<List<CategoriaDto>> GetAllCategoriasAsync()
     {
-        return Task.FromResult(_categorias.FirstOrDefault(c => c.IdCategoria == id));
+        return await _context.Categorias
+            .Select(c => new CategoriaDto
+            {
+                IdCategoria = c.IdCategoria,
+                Nombre = c.Nombre,
+                Descripcion = c.Descripcion
+            })
+            .ToListAsync();
+    }
+
+    public async Task<CategoriaDto?> GetCategoriaByIdAsync(int id)
+    {
+        var categoria = await _context.Categorias.FindAsync(id);
+        if (categoria == null) return null;
+
+        return new CategoriaDto
+        {
+            IdCategoria = categoria.IdCategoria,
+            Nombre = categoria.Nombre,
+            Descripcion = categoria.Descripcion
+        };
     }
 }

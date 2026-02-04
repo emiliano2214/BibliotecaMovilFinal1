@@ -1,22 +1,52 @@
+using BibliotecaMovil.Server.Data;
 using BibliotecaMovil.Shared.DTOs;
 using BibliotecaMovil.Shared.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace BibliotecaMovil.Server.Repositories;
 
 public class UsuarioRepository : IUsuarioRepository
 {
-    private readonly List<UsuarioDto> _usuarios = new();
+    private readonly BibliotecaDbContext _context;
 
-    public Task<UsuarioDto?> GetUsuarioByEmailAsync(string email)
+    public UsuarioRepository(BibliotecaDbContext context)
     {
-        var usuario = _usuarios.FirstOrDefault(u => u.Email == email);
-        return Task.FromResult(usuario);
+        _context = context;
     }
 
-    public Task<bool> CreateUsuarioAsync(UsuarioDto usuario)
+    public async Task<UsuarioDto?> GetUsuarioByEmailAsync(string email)
     {
-        usuario.IdUsuario = _usuarios.Count + 1;
-        _usuarios.Add(usuario);
-        return Task.FromResult(true);
+        var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Email == email);
+        if (usuario == null) return null;
+
+        return new UsuarioDto
+        {
+            IdUsuario = usuario.IdUsuario,
+            IdRol = usuario.RolId,
+            Nombre = usuario.NombreUsuario,
+            Apellido = null,
+            Email = usuario.Email,
+            PasswordHash = usuario.HashPassword,
+            FechaAlta = usuario.FechaAlta,
+            Activo = usuario.Activo
+        };
+    }
+
+    public async Task<bool> CreateUsuarioAsync(UsuarioDto usuarioDto)
+    {
+        var usuario = new Biblioteca.Models.Usuario
+        {
+            NombreUsuario = usuarioDto.Nombre + (string.IsNullOrEmpty(usuarioDto.Apellido) ? "" : " " + usuarioDto.Apellido),
+            Email = usuarioDto.Email,
+            HashPassword = usuarioDto.PasswordHash,
+            RolId = usuarioDto.IdRol,
+            FechaAlta = usuarioDto.FechaAlta,
+            Activo = usuarioDto.Activo,
+            ImgUrl = null
+        };
+
+        _context.Usuarios.Add(usuario);
+        await _context.SaveChangesAsync();
+        return true;
     }
 }

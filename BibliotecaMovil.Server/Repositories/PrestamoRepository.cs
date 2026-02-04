@@ -1,21 +1,48 @@
+using BibliotecaMovil.Server.Data;
 using BibliotecaMovil.Shared.DTOs;
 using BibliotecaMovil.Shared.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace BibliotecaMovil.Server.Repositories;
 
 public class PrestamoRepository : IPrestamoRepository
 {
-    private readonly List<PrestamoDto> _prestamos = new();
+    private readonly BibliotecaDbContext _context;
 
-    public Task<List<PrestamoDto>> GetPrestamosByUsuarioIdAsync(int usuarioId)
+    public PrestamoRepository(BibliotecaDbContext context)
     {
-        return Task.FromResult(_prestamos.Where(p => p.IdUsuario == usuarioId).ToList());
+        _context = context;
     }
 
-    public Task<bool> CreatePrestamoAsync(PrestamoDto prestamo)
+    public async Task<List<PrestamoDto>> GetPrestamosByUsuarioIdAsync(int usuarioId)
     {
-        prestamo.IdPrestamo = _prestamos.Count + 1;
-        _prestamos.Add(prestamo);
-        return Task.FromResult(true);
+        return await _context.Prestamos
+            .Where(p => p.IdUsuario == usuarioId)
+            .Select(p => new PrestamoDto
+            {
+                IdPrestamo = p.IdPrestamo,
+                IdUsuario = p.IdUsuario,
+                FechaPrestamo = p.FechaInicio,
+                FechaVencimiento = p.FechaVencimiento,
+                FechaDevolucion = p.FechaDevolucion,
+                Estado = p.Estado
+            })
+            .ToListAsync();
+    }
+
+    public async Task<bool> CreatePrestamoAsync(PrestamoDto prestamoDto)
+    {
+        var prestamo = new Biblioteca.Models.Prestamo
+        {
+            IdUsuario = prestamoDto.IdUsuario,
+            FechaInicio = prestamoDto.FechaPrestamo,
+            FechaVencimiento = prestamoDto.FechaVencimiento,
+            FechaDevolucion = prestamoDto.FechaDevolucion,
+            Estado = prestamoDto.Estado
+        };
+
+        _context.Prestamos.Add(prestamo);
+        await _context.SaveChangesAsync();
+        return true;
     }
 }

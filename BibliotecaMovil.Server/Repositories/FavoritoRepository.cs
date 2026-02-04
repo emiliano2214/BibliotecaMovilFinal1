@@ -1,36 +1,59 @@
+using BibliotecaMovil.Server.Data;
 using BibliotecaMovil.Shared.DTOs;
 using BibliotecaMovil.Shared.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace BibliotecaMovil.Server.Repositories;
 
 public class FavoritoRepository : IFavoritoRepository
 {
-    private readonly List<FavoritoDto> _favoritos = new();
+    private readonly BibliotecaDbContext _context;
 
-    public Task<List<FavoritoDto>> GetFavoritosByUsuarioIdAsync(int usuarioId)
+    public FavoritoRepository(BibliotecaDbContext context)
     {
-        return Task.FromResult(_favoritos.Where(f => f.IdUsuario == usuarioId).ToList());
+        _context = context;
     }
 
-    public Task<bool> AddFavoritoAsync(FavoritoDto favorito)
+    public async Task<List<FavoritoDto>> GetFavoritosByUsuarioIdAsync(int usuarioId)
     {
-        if (!_favoritos.Any(f => f.IdUsuario == favorito.IdUsuario && f.IdLibro == favorito.IdLibro))
+        return await _context.Favoritos
+            .Where(f => f.IdUsuario == usuarioId)
+            .Select(f => new FavoritoDto
+            {
+                IdFavorito = f.IdFavorito,
+                IdUsuario = f.IdUsuario,
+                IdLibro = f.IdLibro,
+                FechaMarcado = f.Fecha
+            })
+            .ToListAsync();
+    }
+
+    public async Task<bool> AddFavoritoAsync(FavoritoDto favoritoDto)
+    {
+        if (!await _context.Favoritos.AnyAsync(f => f.IdUsuario == favoritoDto.IdUsuario && f.IdLibro == favoritoDto.IdLibro))
         {
-            favorito.IdFavorito = _favoritos.Count + 1;
-            _favoritos.Add(favorito);
-            return Task.FromResult(true);
+            var favorito = new Biblioteca.Models.Favorito
+            {
+                IdUsuario = favoritoDto.IdUsuario,
+                IdLibro = favoritoDto.IdLibro,
+                Fecha = favoritoDto.FechaMarcado
+            };
+            _context.Favoritos.Add(favorito);
+            await _context.SaveChangesAsync();
+            return true;
         }
-        return Task.FromResult(false);
+        return false;
     }
 
-    public Task<bool> RemoveFavoritoAsync(int id)
+    public async Task<bool> RemoveFavoritoAsync(int id)
     {
-        var favorito = _favoritos.FirstOrDefault(f => f.IdFavorito == id);
+        var favorito = await _context.Favoritos.FindAsync(id);
         if (favorito != null)
         {
-            _favoritos.Remove(favorito);
-            return Task.FromResult(true);
+            _context.Favoritos.Remove(favorito);
+            await _context.SaveChangesAsync();
+            return true;
         }
-        return Task.FromResult(false);
+        return false;
     }
 }

@@ -28,7 +28,7 @@ public class FavoritoController : ControllerBase
         if (result) return Ok();
         return BadRequest();
     }
-
+,
     [HttpDelete("{id}")]
     public async Task<IActionResult> RemoveFavorito(int id)
     {

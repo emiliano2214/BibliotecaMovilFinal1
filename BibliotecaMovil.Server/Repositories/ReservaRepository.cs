@@ -1,21 +1,47 @@
+using BibliotecaMovil.Server.Data;
 using BibliotecaMovil.Shared.DTOs;
 using BibliotecaMovil.Shared.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace BibliotecaMovil.Server.Repositories;
 
 public class ReservaRepository : IReservaRepository
 {
-    private readonly List<ReservaDto> _reservas = new();
+    private readonly BibliotecaDbContext _context;
 
-    public Task<List<ReservaDto>> GetReservasByUsuarioIdAsync(int usuarioId)
+    public ReservaRepository(BibliotecaDbContext context)
     {
-        return Task.FromResult(_reservas.Where(r => r.IdUsuario == usuarioId).ToList());
+        _context = context;
     }
 
-    public Task<bool> CreateReservaAsync(ReservaDto reserva)
+    public async Task<List<ReservaDto>> GetReservasByUsuarioIdAsync(int usuarioId)
     {
-        reserva.IdReserva = _reservas.Count + 1;
-        _reservas.Add(reserva);
-        return Task.FromResult(true);
+        return await _context.Reservas
+            .Where(r => r.IdUsuario == usuarioId)
+            .Select(r => new ReservaDto
+            {
+                IdReserva = r.IdReserva,
+                IdUsuario = r.IdUsuario,
+                IdEjemplar = r.IdLibro, // Mapping IdLibro to IdEjemplar as per DTO mismatch
+                FechaReserva = r.FechaReserva,
+                Estado = r.Estado
+            })
+            .ToListAsync();
+    }
+
+    public async Task<bool> CreateReservaAsync(ReservaDto reservaDto)
+    {
+        var reserva = new Biblioteca.Models.Reserva
+        {
+            IdUsuario = reservaDto.IdUsuario,
+            IdLibro = reservaDto.IdEjemplar, // Assuming IdEjemplar holds IdLibro
+            FechaReserva = reservaDto.FechaReserva,
+            FechaExpiracion = reservaDto.FechaReserva.AddDays(7), // Default expiration
+            Estado = reservaDto.Estado
+        };
+
+        _context.Reservas.Add(reserva);
+        await _context.SaveChangesAsync();
+        return true;
     }
 }

@@ -1,23 +1,43 @@
+using BibliotecaMovil.Server.Data;
 using BibliotecaMovil.Shared.DTOs;
 using BibliotecaMovil.Shared.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace BibliotecaMovil.Server.Repositories;
 
 public class AutorRepository : IAutorRepository
 {
-    private readonly List<AutorDto> _autores = new()
-    {
-        new AutorDto { IdAutor = 1, Nombre = "Gabriel", Apellidos = "García Márquez", Pais = "Colombia" },
-        new AutorDto { IdAutor = 2, Nombre = "J.K.", Apellidos = "Rowling", Pais = "UK" }
-    };
+    private readonly BibliotecaDbContext _context;
 
-    public Task<List<AutorDto>> GetAllAutoresAsync()
+    public AutorRepository(BibliotecaDbContext context)
     {
-        return Task.FromResult(_autores);
+        _context = context;
     }
 
-    public Task<AutorDto?> GetAutorByIdAsync(int id)
+    public async Task<List<AutorDto>> GetAllAutoresAsync()
     {
-        return Task.FromResult(_autores.FirstOrDefault(a => a.IdAutor == id));
+        return await _context.Autores
+            .Select(a => new AutorDto
+            {
+                IdAutor = a.IdAutor,
+                Nombre = a.Nombre,
+                Apellidos = a.Apellidos,
+                Pais = a.Pais
+            })
+            .ToListAsync();
+    }
+
+    public async Task<AutorDto?> GetAutorByIdAsync(int id)
+    {
+        var autor = await _context.Autores.FindAsync(id);
+        if (autor == null) return null;
+
+        return new AutorDto
+        {
+            IdAutor = autor.IdAutor,
+            Nombre = autor.Nombre,
+            Apellidos = autor.Apellidos,
+            Pais = autor.Pais
+        };
     }
 }

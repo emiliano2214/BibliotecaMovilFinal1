@@ -1,4 +1,7 @@
 @page "/libros"
+@using BibliotecaMovil.Shared.DTOs
+@using BibliotecaMovil.Shared.Interfaces
+@inject ILibroService LibroService
 
 <div style="background:#777FF5; min-height:100vh; display:flex; flex-direction:column;">
     <!-- Header -->
@@ -20,13 +23,33 @@
     <div style="flex:1; background:white;">
         <div style="padding:10px 20px; font-weight:bold;">Lista de Libros</div>
         <div>
-            @for (int i = 0; i < 3; i++)
+            @if (libros == null)
             {
-                <div style="display:grid; grid-template-columns:1fr auto; align-items:center; margin:10px 0; padding:10px 20px; border-bottom:2px solid #777FF5;">
-                    <div>Libro @(i+1)</div>
-                    <div style="font-size:24px;">☆</div>
-                </div>
+                <div style="padding:20px;">Cargando...</div>
+            }
+            else if (!libros.Any())
+            {
+                <div style="padding:20px;">No hay libros disponibles.</div>
+            }
+            else
+            {
+                @foreach (var libro in libros)
+                {
+                    <div style="display:grid; grid-template-columns:1fr auto; align-items:center; margin:10px 0; padding:10px 20px; border-bottom:2px solid #777FF5;">
+                        <div>@libro.Titulo</div>
+                        <div style="font-size:24px;">☆</div>
+                    </div>
+                }
             }
         </div>
     </div>
 </div>
+
+@code {
+    private List<LibroDto>? libros;
+
+    protected override async Task OnInitializedAsync()
+    {
+        libros = await LibroService.GetLibrosAsync();
+    }
+}

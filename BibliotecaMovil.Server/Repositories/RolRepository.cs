@@ -1,23 +1,39 @@
+using BibliotecaMovil.Server.Data;
 using BibliotecaMovil.Shared.DTOs;
 using BibliotecaMovil.Shared.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace BibliotecaMovil.Server.Repositories;
 
 public class RolRepository : IRolRepository
 {
-    private readonly List<RolDto> _roles = new()
-    {
-        new RolDto { IdRol = 1, NombreRol = "Admin" },
-        new RolDto { IdRol = 2, NombreRol = "Usuario" }
-    };
+    private readonly BibliotecaDbContext _context;
 
-    public Task<List<RolDto>> GetAllRolesAsync()
+    public RolRepository(BibliotecaDbContext context)
     {
-        return Task.FromResult(_roles);
+        _context = context;
     }
 
-    public Task<RolDto?> GetRolByIdAsync(int id)
+    public async Task<List<RolDto>> GetAllRolesAsync()
     {
-        return Task.FromResult(_roles.FirstOrDefault(r => r.IdRol == id));
+        return await _context.Roles
+            .Select(r => new RolDto
+            {
+                IdRol = r.IdRol,
+                NombreRol = r.NombreRol
+            })
+            .ToListAsync();
+    }
+
+    public async Task<RolDto?> GetRolByIdAsync(int id)
+    {
+        var rol = await _context.Roles.FindAsync(id);
+        if (rol == null) return null;
+
+        return new RolDto
+        {
+            IdRol = rol.IdRol,
+            NombreRol = rol.NombreRol
+        };
     }
 }

@@ -1,23 +1,46 @@
+using BibliotecaMovil.Server.Data;
 using BibliotecaMovil.Shared.DTOs;
 using BibliotecaMovil.Shared.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace BibliotecaMovil.Server.Repositories;
 
 public class EjemplarRepository : IEjemplarRepository
 {
-    private readonly List<EjemplarDto> _ejemplares = new()
-    {
-        new EjemplarDto { IdEjemplar = 1, IdLibro = 1, CodigoInventario = "INV-001", Estado = "DISPONIBLE", Ubicacion = "Estante A1" },
-        new EjemplarDto { IdEjemplar = 2, IdLibro = 2, CodigoInventario = "INV-002", Estado = "PRESTADO", Ubicacion = "Estante B2" }
-    };
+    private readonly BibliotecaDbContext _context;
 
-    public Task<List<EjemplarDto>> GetEjemplaresByLibroIdAsync(int libroId)
+    public EjemplarRepository(BibliotecaDbContext context)
     {
-        return Task.FromResult(_ejemplares.Where(e => e.IdLibro == libroId).ToList());
+        _context = context;
     }
 
-    public Task<EjemplarDto?> GetEjemplarByIdAsync(int id)
+    public async Task<List<EjemplarDto>> GetEjemplaresByLibroIdAsync(int libroId)
     {
-        return Task.FromResult(_ejemplares.FirstOrDefault(e => e.IdEjemplar == id));
+        return await _context.Ejemplares
+            .Where(e => e.IdLibro == libroId)
+            .Select(e => new EjemplarDto
+            {
+                IdEjemplar = e.IdEjemplar,
+                IdLibro = e.IdLibro,
+                CodigoInventario = e.CodigoInventario,
+                Estado = e.Estado,
+                Ubicacion = null // Not in model
+            })
+            .ToListAsync();
+    }
+
+    public async Task<EjemplarDto?> GetEjemplarByIdAsync(int id)
+    {
+        var ejemplar = await _context.Ejemplares.FindAsync(id);
+        if (ejemplar == null) return null;
+
+        return new EjemplarDto
+        {
+            IdEjemplar = ejemplar.IdEjemplar,
+            IdLibro = ejemplar.IdLibro,
+            CodigoInventario = ejemplar.CodigoInventario,
+            Estado = ejemplar.Estado,
+            Ubicacion = null
+        };
     }
 }

@@ -1,21 +1,50 @@
+using BibliotecaMovil.Server.Data;
 using BibliotecaMovil.Shared.DTOs;
 using BibliotecaMovil.Shared.Interfaces;
+using Microsoft.EntityFrameworkCore;
 
 namespace BibliotecaMovil.Server.Repositories;
 
 public class ResenaRepository : IResenaRepository
 {
-    private readonly List<ResenaDto> _resenas = new();
+    private readonly BibliotecaDbContext _context;
 
-    public Task<List<ResenaDto>> GetResenasByLibroIdAsync(int libroId)
+    public ResenaRepository(BibliotecaDbContext context)
     {
-        return Task.FromResult(_resenas.Where(r => r.IdLibro == libroId).ToList());
+        _context = context;
     }
 
-    public Task<bool> CreateResenaAsync(ResenaDto resena)
+    public async Task<List<ResenaDto>> GetResenasByLibroIdAsync(int libroId)
     {
-        resena.IdResena = _resenas.Count + 1;
-        _resenas.Add(resena);
-        return Task.FromResult(true);
+        return await _context.Resenas
+            .Where(r => r.IdLibro == libroId)
+            .Select(r => new ResenaDto
+            {
+                IdResena = r.IdResena,
+                IdUsuario = r.IdUsuario,
+                IdLibro = r.IdLibro,
+                Titulo = null, // Not in model
+                Contenido = r.Comentario,
+                Puntuacion = r.Puntaje,
+                FechaCreacion = r.Fecha,
+                FechaModificacion = null
+            })
+            .ToListAsync();
+    }
+
+    public async Task<bool> CreateResenaAsync(ResenaDto resenaDto)
+    {
+        var resena = new Biblioteca.Models.Resena
+        {
+            IdUsuario = resenaDto.IdUsuario,
+            IdLibro = resenaDto.IdLibro,
+            Comentario = resenaDto.Contenido,
+            Puntaje = resenaDto.Puntuacion ?? 0,
+            Fecha = resenaDto.FechaCreacion
+        };
+
+        _context.Resenas.Add(resena);
+        await _context.SaveChangesAsync();
+        return true;
     }
 }
