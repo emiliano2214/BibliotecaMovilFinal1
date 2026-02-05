@@ -16,17 +16,20 @@ public class UsuarioRepository : IUsuarioRepository
 
     public async Task<UsuarioDto?> GetUsuarioByEmailAsync(string email)
     {
-        var usuario = await _context.Usuarios.FirstOrDefaultAsync(u => u.Email == email);
+        var usuario = await _context.Usuarios
+            .Include(u => u.Rol)
+            .FirstOrDefaultAsync(u => u.Email == email);
         if (usuario == null) return null;
 
         return new UsuarioDto
         {
             IdUsuario = usuario.IdUsuario,
-            IdRol = usuario.RolId,
-            Nombre = usuario.NombreUsuario,
-            Apellido = null,
+            IdRol = usuario.IdRol,
+            NombreRol = usuario.Rol?.Nombre ?? string.Empty,
+            Nombre = usuario.Nombre,
+            Apellido = usuario.Apellido,
             Email = usuario.Email,
-            PasswordHash = usuario.HashPassword,
+            PasswordHash = usuario.PasswordHash,
             FechaAlta = usuario.FechaAlta,
             Activo = usuario.Activo
         };
@@ -36,10 +39,11 @@ public class UsuarioRepository : IUsuarioRepository
     {
         var usuario = new Biblioteca.Models.Usuario
         {
-            NombreUsuario = usuarioDto.Nombre + (string.IsNullOrEmpty(usuarioDto.Apellido) ? "" : " " + usuarioDto.Apellido),
+            Nombre = usuarioDto.Nombre,
+            Apellido = usuarioDto.Apellido,
             Email = usuarioDto.Email,
-            HashPassword = usuarioDto.PasswordHash,
-            RolId = usuarioDto.IdRol,
+            PasswordHash = usuarioDto.PasswordHash,
+            IdRol = usuarioDto.IdRol,
             FechaAlta = usuarioDto.FechaAlta,
             Activo = usuarioDto.Activo,
             ImgUrl = null
@@ -49,4 +53,25 @@ public class UsuarioRepository : IUsuarioRepository
         await _context.SaveChangesAsync();
         return true;
     }
+
+    public async Task<UsuarioAuthDto?> GetUsuarioAuthByEmailAsync(string email)
+    {
+        var usuario = await _context.Usuarios
+            .Include(u => u.Rol)
+            .FirstOrDefaultAsync(u => u.Email == email);
+
+        if (usuario is null) return null;
+
+        return new UsuarioAuthDto
+        {
+            IdUsuario = usuario.IdUsuario,
+            Email = usuario.Email,
+            PasswordHash = usuario.PasswordHash,
+            IdRol = usuario.IdRol,
+            NombreRol = usuario.Rol?.Nombre ?? "",
+            Nombre = usuario.Nombre,
+            Apellido = usuario.Apellido
+        };
+    }
+
 }

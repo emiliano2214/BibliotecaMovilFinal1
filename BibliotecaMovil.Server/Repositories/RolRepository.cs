@@ -20,7 +20,7 @@ public class RolRepository : IRolRepository
             .Select(r => new RolDto
             {
                 IdRol = r.IdRol,
-                NombreRol = r.NombreRol
+                NombreRol = r.Nombre
             })
             .ToListAsync();
     }
@@ -33,7 +33,7 @@ public class RolRepository : IRolRepository
         return new RolDto
         {
             IdRol = rol.IdRol,
-            NombreRol = rol.NombreRol
+            NombreRol = rol.Nombre
         };
     }
 }

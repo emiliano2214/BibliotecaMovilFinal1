@@ -8,9 +8,10 @@ namespace Biblioteca.Models
     {
         [Key]
         public int IdUsuario { get; set; }
-        public string NombreUsuario { get; set; } = string.Empty;
-        public string HashPassword { get; set; } = string.Empty;
-        public int RolId { get; set; }
+        public string Nombre { get; set; } = string.Empty;
+        public string? Apellido { get; set; } = string.Empty;
+        public string PasswordHash { get; set; } = string.Empty;
+        public int IdRol { get; set; }
         public string? ImgUrl { get; set; }
         public string Email { get; set; } = string.Empty;
         public DateTime FechaAlta { get; set; }

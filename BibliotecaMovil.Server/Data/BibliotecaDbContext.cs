@@ -54,11 +54,6 @@ public class BibliotecaDbContext : DbContext
             .WithMany()
             .HasForeignKey(l => l.IdEditorial);
 
-        modelBuilder.Entity<Libro>()
-            .HasOne(l => l.Categoria)
-            .WithMany()
-            .HasForeignKey(l => l.IdCategoria);
-
         // ✅ Favorito -> Libro / Usuario + nombre real de tabla/columna
         modelBuilder.Entity<Favorito>(e =>
         {
@@ -80,9 +75,13 @@ public class BibliotecaDbContext : DbContext
         });
 
         // Usuario -> Rol
-        modelBuilder.Entity<Usuario>()
-            .HasOne(u => u.Rol)
-            .WithMany()
-            .HasForeignKey(u => u.RolId);
+        modelBuilder.Entity<Usuario>(e =>
+        {
+            e.ToTable("Usuarios");
+
+            e.HasOne(u => u.Rol)
+             .WithMany(r => r.Usuarios)
+             .HasForeignKey(u => u.IdRol);
+        });
     }
 }

@@ -6,4 +6,5 @@ public interface IUsuarioRepository
 {
     Task<UsuarioDto?> GetUsuarioByEmailAsync(string email);
     Task<bool> CreateUsuarioAsync(UsuarioDto usuario);
+    Task<UsuarioAuthDto?> GetUsuarioAuthByEmailAsync(string email);
 }
