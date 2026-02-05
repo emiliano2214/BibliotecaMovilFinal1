@@ -4,7 +4,7 @@ namespace BibliotecaMovil.Shared.Interfaces;
 
 public interface IFavoritoService
 {
-    Task<List<FavoritoDto>> GetFavoritosByUsuarioIdAsync(int usuarioId);
+    Task<List<FavoritoDto>> GetFavoritosByUsuarioAsync(int usuarioId);
     Task<bool> AddFavoritoAsync(FavoritoDto favorito);
-    Task<bool> RemoveFavoritoAsync(int id);
+    Task<bool> RemoveFavoritoAsync(int idLibro, int idUsuario);
 }

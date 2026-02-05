@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+
 
 namespace Biblioteca.Models
 {
     public class Prestamo
     {
+        [Key]
         public int IdPrestamo { get; set; }
         public int IdUsuario { get; set; }
         public DateTime FechaInicio { get; set; }

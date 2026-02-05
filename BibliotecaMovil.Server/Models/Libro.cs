@@ -1,14 +1,17 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+
 
 namespace Biblioteca.Models
 {
     public class Libro
     {
+        [Key]
         public int IdLibro { get; set; }
         public string Titulo { get; set; } = string.Empty;
-        public string Descripcion { get; set; } = string.Empty;
-        public DateTime FechaEmision { get; set; }
+        public string Resumen { get; set; } = string.Empty;
+        public DateTime AnioPublicacion { get; set; }
         public string? ImagenUrl { get; set; }
         public int IdAutor { get; set; }
         public int IdEditorial { get; set; }

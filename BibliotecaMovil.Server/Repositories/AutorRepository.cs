@@ -21,8 +21,8 @@ public class AutorRepository : IAutorRepository
             {
                 IdAutor = a.IdAutor,
                 Nombre = a.Nombre,
-                Apellidos = a.Apellidos,
-                Pais = a.Pais
+                Apellidos = a.Apellido,
+                Pais = a.Nacionalidad
             })
             .ToListAsync();
     }
@@ -36,8 +36,8 @@ public class AutorRepository : IAutorRepository
         {
             IdAutor = autor.IdAutor,
             Nombre = autor.Nombre,
-            Apellidos = autor.Apellidos,
-            Pais = autor.Pais
+            Apellidos = autor.Apellido,
+            Pais = autor.Nacionalidad
         };
     }
 }

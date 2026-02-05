@@ -28,20 +28,20 @@ namespace BibliotecaMovil
             serverUrl = "http://localhost:7250";
 #endif
 
-            //builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(serverUrl) });
+            builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(serverUrl) });
 
-            //builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IAutorService, BibliotecaMovil.Services.AutorService>();
-            //builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.ILibroService, BibliotecaMovil.Services.LibroService>();
-            //builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.ICategoriaService, BibliotecaMovil.Services.CategoriaService>();
-            //builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IEditorialService, BibliotecaMovil.Services.EditorialService>();
-            //builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IEjemplarService, BibliotecaMovil.Services.EjemplarService>();
-            //builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IFavoritoService, BibliotecaMovil.Services.FavoritoService>();
-            //builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IPrestamoService, BibliotecaMovil.Services.PrestamoService>();
-            //builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IResenaService, BibliotecaMovil.Services.ResenaService>();
-            //builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IReservaService, BibliotecaMovil.Services.ReservaService>();
-            //builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IRolService, BibliotecaMovil.Services.RolService>();
-            //builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.ISancionService, BibliotecaMovil.Services.SancionService>();
-            //builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IUsuarioService, BibliotecaMovil.Services.UsuarioService>();
+            builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IAutorService, BibliotecaMovil.Services.AutorService>();
+            builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.ILibroService, BibliotecaMovil.Services.LibroService>();
+            builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.ICategoriaService, BibliotecaMovil.Services.CategoriaService>();
+            builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IEditorialService, BibliotecaMovil.Services.EditorialService>();
+            builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IEjemplarService, BibliotecaMovil.Services.EjemplarService>();
+            builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IFavoritoService, BibliotecaMovil.Services.FavoritoService>();
+            builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IPrestamoService, BibliotecaMovil.Services.PrestamoService>();
+            builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IResenaService, BibliotecaMovil.Services.ResenaService>();
+            builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IReservaService, BibliotecaMovil.Services.ReservaService>();
+            builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IRolService, BibliotecaMovil.Services.RolService>();
+            builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.ISancionService, BibliotecaMovil.Services.SancionService>();
+            builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IUsuarioService, BibliotecaMovil.Services.UsuarioService>();
             
             return builder.Build();
         }

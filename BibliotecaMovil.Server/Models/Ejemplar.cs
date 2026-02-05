@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 
 namespace Biblioteca.Models
 {
     public class Ejemplar
     {
+        [Key]
         public int IdEjemplar { get; set; }
         public int IdLibro { get; set; }
         public string CodigoInventario { get; set; } = string.Empty;

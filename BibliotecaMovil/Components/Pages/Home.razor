@@ -16,15 +16,31 @@
 
         <!-- Avatar + menú -->
         <div style="justify-self:end; display:flex; align-items:flex-start; gap:10px;">
+
+            <!-- Avatar -->
             <div style="width:48px; height:48px; border-radius:24px; background:white; display:flex; align-items:center; justify-content:center; margin-right:10px;">
                 <img src="images/avatar_placeholder.png" alt="Avatar" style="width:40px; height:40px;" />
             </div>
-            <div style="background:#0050FF; padding:10px 8px; display:flex; flex-direction:column; gap:4px; align-self:flex-start;">
-                <div style="height:2px; width:24px; background:black;"></div>
-                <div style="height:2px; width:24px; background:black;"></div>
-                <div style="height:2px; width:24px; background:black;"></div>
-            </div>
+
+            <!-- Botón menú -->
+            <NavLink href="/menu" style="text-decoration:none;">
+                <div style="background:#0050FF;
+                    padding:10px 8px;
+                    display:flex;
+                    flex-direction:column;
+                    gap:4px;
+                    align-self:flex-start;
+                    cursor:pointer;">
+
+                    <div style="height:2px; width:24px; background:black;"></div>
+                    <div style="height:2px; width:24px; background:black;"></div>
+                    <div style="height:2px; width:24px; background:black;"></div>
+
+                </div>
+            </NavLink>
+
         </div>
+
     </div>
 
     <!-- Contenido -->

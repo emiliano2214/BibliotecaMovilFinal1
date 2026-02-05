@@ -1,9 +1,11 @@
 using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace Biblioteca.Models
 {
     public class Sancion
     {
+        [Key]
         public int IdSancion { get; set; }
         public int IdUsuario { get; set; }
         public int IdPrestamo { get; set; }

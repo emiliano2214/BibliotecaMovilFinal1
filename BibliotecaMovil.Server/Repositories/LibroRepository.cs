@@ -21,10 +21,10 @@ public class LibroRepository : ILibroRepository
             {
                 IdLibro = l.IdLibro,
                 Titulo = l.Titulo,
-                Descripcion = l.Descripcion,
+                Resumen = l.Resumen,
                 IdCategoria = l.IdCategoria,
                 IdEditorial = l.IdEditorial,
-                AnioPublicacion = l.FechaEmision.Year
+                AnioPublicacion = l.AnioPublicacion
             })
             .ToListAsync();
     }
@@ -38,10 +38,10 @@ public class LibroRepository : ILibroRepository
         {
             IdLibro = libro.IdLibro,
             Titulo = libro.Titulo,
-            Descripcion = libro.Descripcion,
+            Resumen = libro.Resumen,
             IdCategoria = libro.IdCategoria,
             IdEditorial = libro.IdEditorial,
-            AnioPublicacion = libro.FechaEmision.Year
+            AnioPublicacion = libro.AnioPublicacion
         };
     }
 
@@ -53,10 +53,10 @@ public class LibroRepository : ILibroRepository
             {
                 IdLibro = l.IdLibro,
                 Titulo = l.Titulo,
-                Descripcion = l.Descripcion,
+                Resumen = l.Resumen,
                 IdCategoria = l.IdCategoria,
                 IdEditorial = l.IdEditorial,
-                AnioPublicacion = l.FechaEmision.Year
+                AnioPublicacion = l.AnioPublicacion
             })
             .ToListAsync();
     }

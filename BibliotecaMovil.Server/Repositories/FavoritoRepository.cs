@@ -20,29 +20,29 @@ public class FavoritoRepository : IFavoritoRepository
             .Where(f => f.IdUsuario == usuarioId)
             .Select(f => new FavoritoDto
             {
-                IdFavorito = f.IdFavorito,
                 IdUsuario = f.IdUsuario,
                 IdLibro = f.IdLibro,
-                FechaMarcado = f.Fecha
+                FechaAgregado = f.FechaAgregado
             })
             .ToListAsync();
     }
 
-    public async Task<bool> AddFavoritoAsync(FavoritoDto favoritoDto)
+    public async Task<bool> AddFavoritoAsync(FavoritoDto dto)
     {
-        if (!await _context.Favoritos.AnyAsync(f => f.IdUsuario == favoritoDto.IdUsuario && f.IdLibro == favoritoDto.IdLibro))
+        var exists = await _context.Favoritos.AnyAsync(f =>
+            f.IdUsuario == dto.IdUsuario && f.IdLibro == dto.IdLibro);
+
+        if (exists) return false;
+
+        _context.Favoritos.Add(new Biblioteca.Models.Favorito
         {
-            var favorito = new Biblioteca.Models.Favorito
-            {
-                IdUsuario = favoritoDto.IdUsuario,
-                IdLibro = favoritoDto.IdLibro,
-                Fecha = favoritoDto.FechaMarcado
-            };
-            _context.Favoritos.Add(favorito);
-            await _context.SaveChangesAsync();
-            return true;
-        }
-        return false;
+            IdUsuario = dto.IdUsuario,
+            IdLibro = dto.IdLibro,
+            FechaAgregado = dto.FechaAgregado
+        });
+
+        await _context.SaveChangesAsync();
+        return true;
     }
 
     public async Task<bool> RemoveFavoritoAsync(int id)

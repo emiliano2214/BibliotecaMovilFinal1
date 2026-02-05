@@ -5,11 +5,14 @@
         <div style="font-size:18px; font-weight:bold; margin-bottom:8px;">Busqueda</div>
         <div style="display:grid; grid-template-columns:1fr auto auto; column-gap:8px; align-items:center;">
             <input style="width:100%; height:36px; background:#DDDDDD; border:none;" />
-            <div style="background:#0050FF; padding:6px 6px; display:flex; flex-direction:column; gap:3px;">
-                <div style="height:2px; width:18px; background:black;"></div>
-                <div style="height:2px; width:18px; background:black;"></div>
-                <div style="height:2px; width:18px; background:black;"></div>
-            </div>
+            <!-- Menú -> /menu -->
+            <NavLink href="/menu" style="text-decoration:none; color:black; display:block;">
+                <div style="background:#0050FF; padding:8px 6px; display:flex; flex-direction:column; gap:3px; cursor:pointer;">
+                    <div style="height:2px; width:20px; background:black;"></div>
+                    <div style="height:2px; width:20px; background:black;"></div>
+                    <div style="height:2px; width:20px; background:black;"></div>
+                </div>
+            </NavLink>
             <div style="background:#0050FF; width:34px; height:34px; display:flex; align-items:center; justify-content:center;">
                 <span style="font-size:18px;">🗓️</span>
             </div>

@@ -18,22 +18,21 @@ public class FavoritoController : ControllerBase
     [HttpGet("usuario/{usuarioId}")]
     public async Task<ActionResult<List<FavoritoDto>>> GetFavoritosByUsuario(int usuarioId)
     {
-        return await _favoritoRepository.GetFavoritosByUsuarioIdAsync(usuarioId);
+        var favoritos = await _favoritoRepository.GetFavoritosByUsuarioIdAsync(usuarioId);
+        return Ok(favoritos);
     }
 
     [HttpPost]
     public async Task<IActionResult> AddFavorito([FromBody] FavoritoDto favorito)
     {
         var result = await _favoritoRepository.AddFavoritoAsync(favorito);
-        if (result) return Ok();
-        return BadRequest();
+        return result ? Ok() : BadRequest();
     }
-,
+
     [HttpDelete("{id}")]
     public async Task<IActionResult> RemoveFavorito(int id)
     {
         var result = await _favoritoRepository.RemoveFavoritoAsync(id);
-        if (result) return Ok();
-        return NotFound();
+        return result ? Ok() : NotFound();
     }
 }

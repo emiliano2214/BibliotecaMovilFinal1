@@ -1,32 +1,27 @@
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 using BibliotecaMovil.Shared.DTOs;
 using BibliotecaMovil.Shared.Interfaces;
 
 namespace BibliotecaMovil.Services;
 
-public class FavoritoService : IFavoritoService
+public sealed class FavoritoService : IFavoritoService
 {
-    private readonly HttpClient _httpClient;
+    private readonly HttpClient _http;
+    public FavoritoService(HttpClient http) => _http = http;
 
-    public FavoritoService(HttpClient httpClient)
-    {
-        _httpClient = httpClient;
-    }
-
-    public async Task<List<FavoritoDto>> GetFavoritosByUsuarioIdAsync(int usuarioId)
-    {
-        return await _httpClient.GetFromJsonAsync<List<FavoritoDto>>($"api/favorito/usuario/{usuarioId}") ?? new List<FavoritoDto>();
-    }
+    public async Task<List<FavoritoDto>> GetFavoritosByUsuarioAsync(int usuarioId)
+        => await _http.GetFromJsonAsync<List<FavoritoDto>>($"api/Favorito/usuario/{usuarioId}") ?? new();
 
     public async Task<bool> AddFavoritoAsync(FavoritoDto favorito)
     {
-        var response = await _httpClient.PostAsJsonAsync("api/favorito", favorito);
-        return response.IsSuccessStatusCode;
+        var resp = await _http.PostAsJsonAsync("api/Favorito", favorito);
+        return resp.IsSuccessStatusCode;
     }
 
-    public async Task<bool> RemoveFavoritoAsync(int id)
+    // ✅ PK compuesta (usuarioId + libroId)
+    public async Task<bool> RemoveFavoritoAsync(int usuarioId, int libroId)
     {
-        var response = await _httpClient.DeleteAsync($"api/favorito/{id}");
-        return response.IsSuccessStatusCode;
+        var resp = await _http.DeleteAsync($"api/Favorito/usuario/{usuarioId}/libro/{libroId}");
+        return resp.IsSuccessStatusCode;
     }
 }

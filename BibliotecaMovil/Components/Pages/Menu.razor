@@ -1,30 +1,104 @@
 @page "/menu"
+@inject NavigationManager Nav
 
 <div style="background-color:#777FF5; min-height:100vh; display:flex; justify-content:center; align-items:flex-start; padding-top:80px;">
+
     <div style="display:grid; grid-template-columns:120px 120px; grid-row-gap:30px; grid-column-gap:30px;">
-        <div style="width:120px; height:120px; background:#0050FF; display:flex; justify-content:center; align-items:center;">
-            <img src="images/icon_usuario.png" alt="Usuario" style="width:70px; height:70px;" />
+
+        <NavLink href="/cuenta" style="@LinkStyle">
+            <div style="@CardStyle">
+                <img src="images/icon_usuario.png" alt="Usuario" style="@IconStyle" />
+                <div style="@TextStyle">Usuario</div>
+            </div>
+        </NavLink>
+
+        <NavLink href="/libros" style="@LinkStyle">
+            <div style="@CardStyle">
+                <img src="images/icon_Libro.png" alt="Libros" style="@IconStyle" />
+                <div style="@TextStyle">Libros</div>
+            </div>
+        </NavLink>
+
+        <NavLink href="/prestamos" style="@LinkStyle">
+            <div style="@CardStyle">
+                <img src="images/icon_calendar.png" alt="Prestamos" style="@IconStyle" />
+                <div style="@TextStyle">Préstamos</div>
+            </div>
+        </NavLink>
+
+        <NavLink href="/busqueda" style="@LinkStyle">
+            <div style="@CardStyle">
+                <img src="images/icon_search.png" alt="Busqueda" style="@IconStyle" />
+                <div style="@TextStyle">Búsqueda</div>
+            </div>
+        </NavLink>
+
+        <NavLink href="/resenas" style="@LinkStyle">
+            <div style="@CardStyle">
+                <img src="images/icon_chat.png" alt="Reseñas" style="@IconStyle" />
+                <div style="@TextStyle">Reseñas</div>
+            </div>
+        </NavLink>
+
+        <NavLink href="/favoritos" style="@LinkStyle">
+            <div style="@CardStyle">
+                <img src="images/icon_star.png" alt="Favoritos" style="@IconStyle" />
+                <div style="@TextStyle">Favoritos</div>
+            </div>
+        </NavLink>
+
+        <NavLink href="/editoriales" style="@LinkStyle">
+            <div style="@CardStyle">
+                <img src="images/icon_building.png" alt="Editoriales" style="@IconStyle" />
+                <div style="@TextStyle">Editoriales</div>
+            </div>
+        </NavLink>
+
+        <div style="@CardStyle" @onclick="Logout">
+            <img src="images/icon_exit.png" alt="Salir" style="@IconStyle" />
+            <div style="@TextStyle">Salir</div>
         </div>
-        <div style="width:120px; height:120px; background:#0050FF; display:flex; justify-content:center; align-items:center;">
-            <img src="images/icon_Libro.png" alt="Libros" style="width:70px; height:70px;" />
-        </div>
-        <div style="width:120px; height:120px; background:#0050FF; display:flex; justify-content:center; align-items:center;">
-            <img src="images/icon_calendar.png" alt="Prestamos" style="width:70px; height:70px;" />
-        </div>
-        <div style="width:120px; height:120px; background:#0050FF; display:flex; justify-content:center; align-items:center;">
-            <img src="images/icon_search.png" alt="Busqueda" style="width:70px; height:70px;" />
-        </div>
-        <div style="width:120px; height:120px; background:#0050FF; display:flex; justify-content:center; align-items:center;">
-            <img src="images/icon_chat.png" alt="Reseñas" style="width:70px; height:70px;" />
-        </div>
-        <div style="width:120px; height:120px; background:#0050FF; display:flex; justify-content:center; align-items:center;">
-            <img src="images/icon_star.png" alt="Favoritos" style="width:70px; height:70px;" />
-        </div>
-        <div style="width:120px; height:120px; background:#0050FF; display:flex; justify-content:center; align-items:center;">
-            <img src="images/icon_building.png" alt="Editoriales" style="width:70px; height:70px;" />
-        </div>
-        <div style="width:120px; height:120px; background:#0050FF; display:flex; justify-content:center; align-items:center;">
-            <img src="images/icon_exit.png" alt="Salir" style="width:70px; height:70px;" />
-        </div>
+
     </div>
 </div>
+
+@code
+{
+    // Para que el <a> (NavLink) no pinte azul ni subraye
+    string LinkStyle =
+        "text-decoration:none;" +
+        "color:black;" +
+        "display:block;";
+
+    // Tarjeta clickeable (mantiene tu tamaño 120x120 y el fondo)
+    string CardStyle =
+        "width:120px;" +
+        "height:120px;" +
+        "background:#0050FF;" +
+        "display:flex;" +
+        "flex-direction:column;" +
+        "justify-content:center;" +
+        "align-items:center;" +
+        "gap:8px;" +
+        "cursor:pointer;" +
+        "-webkit-tap-highlight-color: transparent;" +
+        "transition:0.12s;";
+
+    // Ícono
+    string IconStyle =
+        "width:70px;" +
+        "height:70px;";
+
+    // Texto negro
+    string TextStyle =
+        "font-size:14px;" +
+        "font-weight:600;" +
+        "color:black;" +
+        "text-align:center;";
+
+    void Logout()
+    {
+        // TODO: acá podés borrar token/estado de sesión (localStorage, auth state, etc.)
+        Nav.NavigateTo("/login", true); // true => fuerza recarga limpia
+    }
+}

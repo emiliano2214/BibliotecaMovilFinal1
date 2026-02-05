@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Biblioteca.Models;
 
 namespace BibliotecaMovil.Server.Data;
@@ -24,7 +24,65 @@ public class BibliotecaDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // Configure relationships if needed, or rely on conventions.
-        // For now, we'll stick to conventions as the Models seem to have navigation properties.
+        // ====== KEYS ======
+        modelBuilder.Entity<Autor>().HasKey(x => x.IdAutor);
+        modelBuilder.Entity<Libro>().HasKey(x => x.IdLibro);
+        modelBuilder.Entity<Usuario>().HasKey(x => x.IdUsuario);
+
+        // ✅ FAVORITOS: PK COMPUESTA (IdUsuario, IdLibro)
+        modelBuilder.Entity<Favorito>().HasKey(x => new { x.IdUsuario, x.IdLibro });
+
+        modelBuilder.Entity<Categoria>().HasKey(x => x.IdCategoria);
+        modelBuilder.Entity<Editorial>().HasKey(x => x.IdEditorial);
+        modelBuilder.Entity<Ejemplar>().HasKey(x => x.IdEjemplar);
+        modelBuilder.Entity<Rol>().HasKey(x => x.IdRol);
+        modelBuilder.Entity<Prestamo>().HasKey(x => x.IdPrestamo);
+        modelBuilder.Entity<Resena>().HasKey(x => x.IdResena);
+        modelBuilder.Entity<Reserva>().HasKey(x => x.IdReserva);
+        modelBuilder.Entity<Sancion>().HasKey(x => x.IdSancion);
+
+        // ====== RELACIONES PRINCIPALES ======
+
+        // Libro -> Autor / Editorial / Categoria
+        modelBuilder.Entity<Libro>()
+            .HasOne(l => l.Autor)
+            .WithMany(a => a.Libros)
+            .HasForeignKey(l => l.IdAutor);
+
+        modelBuilder.Entity<Libro>()
+            .HasOne(l => l.Editorial)
+            .WithMany()
+            .HasForeignKey(l => l.IdEditorial);
+
+        modelBuilder.Entity<Libro>()
+            .HasOne(l => l.Categoria)
+            .WithMany()
+            .HasForeignKey(l => l.IdCategoria);
+
+        // ✅ Favorito -> Libro / Usuario + nombre real de tabla/columna
+        modelBuilder.Entity<Favorito>(e =>
+        {
+            e.ToTable("Favoritos", "dbo");
+
+            // (ya está el HasKey arriba, pero si querés tener todo acá, podés moverlo aquí)
+            // e.HasKey(x => new { x.IdUsuario, x.IdLibro });
+
+            e.Property(x => x.FechaAgregado)
+                .HasColumnName("FechaAgregado");
+
+            e.HasOne(x => x.Usuario)
+                .WithMany(u => u.Favoritos)
+                .HasForeignKey(x => x.IdUsuario);
+
+            e.HasOne(x => x.Libro)
+                .WithMany(l => l.Favoritos)
+                .HasForeignKey(x => x.IdLibro);
+        });
+
+        // Usuario -> Rol
+        modelBuilder.Entity<Usuario>()
+            .HasOne(u => u.Rol)
+            .WithMany()
+            .HasForeignKey(u => u.RolId);
     }
 }
