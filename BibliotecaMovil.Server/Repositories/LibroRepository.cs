@@ -1,6 +1,5 @@
 using BibliotecaMovil.Server.Data;
 using BibliotecaMovil.Shared.DTOs;
-using BibliotecaMovil.Shared.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace BibliotecaMovil.Server.Repositories;

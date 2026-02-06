@@ -6,16 +6,21 @@ using System.Threading.Tasks;
 
 namespace BibliotecaMovil.Shared.DTOs
 {
-    public sealed class RegisterRequestDto
+    public sealed class UsuarioPublicoDto
     {
+        public int IdUsuario { get; set; }
+        public int IdRol { get; set; }
+        public string NombreRol { get; set; } = string.Empty;
+
         public string Nombre { get; set; } = string.Empty;
         public string? Apellido { get; set; }
+        public string NombreCompleto => $"{Nombre} {Apellido}".Trim();
+
         public string Email { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
-        public int RolId { get; set; }
+
+        public string? ImgUrl { get; set; }
         public DateTime FechaAlta { get; set; }
         public bool Activo { get; set; }
-        public string? ImgUrl { get; set; } = string.Empty;    
     }
 
 }

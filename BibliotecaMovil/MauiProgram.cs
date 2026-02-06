@@ -43,7 +43,9 @@ namespace BibliotecaMovil
             builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.ISancionService, BibliotecaMovil.Services.SancionService>();
             builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IUsuarioAuthService, BibliotecaMovil.Services.UsuarioAuthService>();
             builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IUsuarioService, BibliotecaMovil.Services.UsuarioService>();
-            
+            builder.Services.AddSingleton<BibliotecaMovil.Services.UsuarioSesionService>();
+
+
             return builder.Build();
         }
     }

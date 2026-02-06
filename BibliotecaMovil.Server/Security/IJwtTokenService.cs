@@ -1,4 +1,5 @@
-﻿using BibliotecaMovil.Shared.DTOs;
+﻿using BibliotecaMovil.Server.Models;
+using BibliotecaMovil.Shared.DTOs;
 
 namespace BibliotecaMovil.Server.Security;
 
@@ -8,5 +9,5 @@ public interface IJwtTokenService
     /// Genera un JWT firmado para el usuario autenticado.
     /// Debe incluir al menos: IdUsuario, Email y Role (NombreRol).
     /// </summary>
-    string GenerateToken(UsuarioAuthDto usuario);
+    string GenerateToken(UsuarioAuthData usuario);
 }

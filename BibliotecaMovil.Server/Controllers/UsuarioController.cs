@@ -1,9 +1,8 @@
-﻿using Biblioteca.Models;
+﻿using BibliotecaMovil.Server.Models;
+using BibliotecaMovil.Server.Repositories;
 using BibliotecaMovil.Server.Security;
 using BibliotecaMovil.Shared.DTOs;
-using BibliotecaMovil.Shared.Interfaces;
 using Microsoft.AspNetCore.Mvc;
-
 
 namespace BibliotecaMovil.Server.Controllers;
 
@@ -15,7 +14,10 @@ public class UsuarioController : ControllerBase
     private readonly IJwtTokenService _jwtTokenService;
     private readonly IPasswordService _passwordService;
 
-    public UsuarioController(IUsuarioRepository usuarioRepository, IJwtTokenService jwtTokenService, IPasswordService passwordService)
+    public UsuarioController(
+        IUsuarioRepository usuarioRepository,
+        IJwtTokenService jwtTokenService,
+        IPasswordService passwordService)
     {
         _usuarioRepository = usuarioRepository;
         _jwtTokenService = jwtTokenService;
@@ -34,46 +36,44 @@ public class UsuarioController : ControllerBase
         if (!ok)
             return Unauthorized(new { message = "Credenciales inválidas" });
 
-        var token = _jwtTokenService.GenerateToken(existing); // tu token usa rol/nombre/etc
+        var token = _jwtTokenService.GenerateToken(existing);
+
+        // ✅ DTO público para UI
+        var userPublico = new UsuarioPublicoDto
+        {
+            IdUsuario = existing.IdUsuario,
+            Email = existing.Email,
+            IdRol = existing.IdRol,
+            NombreRol = existing.NombreRol,
+            Nombre = existing.Nombre,
+            Apellido = existing.Apellido,
+            Activo = true
+        };
 
         return Ok(new LoginResponseDto
         {
             Token = token,
             ExpiresInMinutes = 60,
-            User = new UsuarioDto
-            {
-                IdUsuario = existing.IdUsuario,
-                Email = existing.Email,
-                IdRol = existing.IdRol,
-                NombreRol = existing.NombreRol,
-                Nombre = existing.Nombre,
-                Apellido = existing.Apellido,
-                Activo = true
-            }
+            User = userPublico
         });
     }
-
 
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterRequestDto req)
     {
-        var existingUsuario = await _usuarioRepository.GetUsuarioByEmailAsync(req.Email);
-        if (existingUsuario != null)
-            return BadRequest("Usuario already exists");
+        var hash = _passwordService.Hash(req.Password);
 
-        var usuarioDto = new UsuarioDto
+        var interno = new UsuarioCreadoInterno
         {
             Nombre = req.Nombre,
             Apellido = req.Apellido,
             Email = req.Email,
+            PasswordHash = hash,
             IdRol = req.RolId,
-            PasswordHash = _passwordService.Hash(req.Password), // ✅ ACÁ se hashea
-            FechaAlta = DateTime.Now,
-            Activo = true
+            ImgUrl = req.ImgUrl
         };
 
-        var result = await _usuarioRepository.CreateUsuarioAsync(usuarioDto);
-        return result ? Ok() : BadRequest("Could not create usuario");
+        await _usuarioRepository.CreateUsuarioAsync(interno);
+        return Ok();
     }
-
 }

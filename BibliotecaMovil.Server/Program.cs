@@ -18,18 +18,18 @@ builder.Services.AddDbContext<BibliotecaDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Repositories
-builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IAutorRepository, BibliotecaMovil.Server.Repositories.AutorRepository>();
-builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.ILibroRepository, BibliotecaMovil.Server.Repositories.LibroRepository>();
-builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.ICategoriaRepository, BibliotecaMovil.Server.Repositories.CategoriaRepository>();
-builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IEditorialRepository, BibliotecaMovil.Server.Repositories.EditorialRepository>();
-builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IEjemplarRepository, BibliotecaMovil.Server.Repositories.EjemplarRepository>();
-builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IFavoritoRepository, BibliotecaMovil.Server.Repositories.FavoritoRepository>();
-builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IPrestamoRepository, BibliotecaMovil.Server.Repositories.PrestamoRepository>();
-builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IResenaRepository, BibliotecaMovil.Server.Repositories.ResenaRepository>();
-builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IReservaRepository, BibliotecaMovil.Server.Repositories.ReservaRepository>();
-builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IRolRepository, BibliotecaMovil.Server.Repositories.RolRepository>();
-builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.ISancionRepository, BibliotecaMovil.Server.Repositories.SancionRepository>();
-builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IUsuarioRepository, BibliotecaMovil.Server.Repositories.UsuarioRepository>();
+builder.Services.AddScoped<BibliotecaMovil.Server.Repositories.IAutorRepository, BibliotecaMovil.Server.Repositories.AutorRepository>();
+builder.Services.AddScoped<BibliotecaMovil.Server.Repositories.ILibroRepository, BibliotecaMovil.Server.Repositories.LibroRepository>();
+builder.Services.AddScoped<BibliotecaMovil.Server.Repositories.ICategoriaRepository, BibliotecaMovil.Server.Repositories.CategoriaRepository>();
+builder.Services.AddScoped<BibliotecaMovil.Server.Repositories.IEditorialRepository, BibliotecaMovil.Server.Repositories.EditorialRepository>();
+builder.Services.AddScoped<BibliotecaMovil.Server.Repositories.IEjemplarRepository, BibliotecaMovil.Server.Repositories.EjemplarRepository>();
+builder.Services.AddScoped<BibliotecaMovil.Server.Repositories.IFavoritoRepository, BibliotecaMovil.Server.Repositories.FavoritoRepository>();
+builder.Services.AddScoped<BibliotecaMovil.Server.Repositories.IPrestamoRepository, BibliotecaMovil.Server.Repositories.PrestamoRepository>();
+builder.Services.AddScoped<BibliotecaMovil.Server.Repositories.IResenaRepository, BibliotecaMovil.Server.Repositories.ResenaRepository>();
+builder.Services.AddScoped<BibliotecaMovil.Server.Repositories.IReservaRepository, BibliotecaMovil.Server.Repositories.ReservaRepository>();
+builder.Services.AddScoped<BibliotecaMovil.Server.Repositories.IRolRepository, BibliotecaMovil.Server.Repositories.RolRepository>();
+builder.Services.AddScoped<BibliotecaMovil.Server.Repositories.ISancionRepository, BibliotecaMovil.Server.Repositories.SancionRepository>();
+builder.Services.AddScoped<BibliotecaMovil.Server.Repositories.IUsuarioRepository, BibliotecaMovil.Server.Repositories.UsuarioRepository>();
 builder.Services.AddScoped<BibliotecaMovil.Server.Security.IJwtTokenService,BibliotecaMovil.Server.Security.JwtTokenService>();
 builder.Services.AddSingleton<BibliotecaMovil.Server.Security.IPasswordService, BibliotecaMovil.Server.Security.PasswordService>();
 

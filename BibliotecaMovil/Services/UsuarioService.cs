@@ -12,23 +12,32 @@ namespace BibliotecaMovil.Services
     public class UsuarioService : IUsuarioService
     {
         private readonly HttpClient _http;
+        public UsuarioService(HttpClient http)
+        {
+            _http = http;
+        }
+        public async Task<List<UsuarioPublicoDto>> GetAllAsync()
+            => await _http.GetFromJsonAsync<List<UsuarioPublicoDto>>("api/Usuario") ?? new();
 
-        public UsuarioService(HttpClient http) => _http = http;
+        public Task<UsuarioPublicoDto?> GetByIdAsync(int id)
+            => _http.GetFromJsonAsync<UsuarioPublicoDto>($"api/Usuario/{id}");
 
-        public Task<List<UsuarioDto>?> GetAllAsync()
-            => _http.GetFromJsonAsync<List<UsuarioDto>>("api/Usuario");
+        public async Task<bool> CreateAsync(UsuarioCreadoDto usuario)
+        {
+            var resp = await _http.PostAsJsonAsync("api/Usuario", usuario);
+            return resp.IsSuccessStatusCode;
+        }
 
-        public Task<UsuarioDto?> GetByIdAsync(int id)
-            => _http.GetFromJsonAsync<UsuarioDto>($"api/Usuario/{id}");
+        public async Task<bool> UpdateAsync(UsuarioActualizadoDto usuario)
+        {
+            var resp = await _http.PutAsJsonAsync($"api/Usuario/{usuario.IdUsuario}", usuario);
+            return resp.IsSuccessStatusCode;
+        }
 
-        public Task<bool> CreateAsync(UsuarioDto usuario)
-            => _http.PostAsJsonAsync("api/Usuario", usuario)
-                    .ContinueWith(task => task.Result.IsSuccessStatusCode);
-        public Task<bool> UpdateAsync(UsuarioDto usuario)
-            => _http.PutAsJsonAsync($"api/Usuario/{usuario.IdUsuario}", usuario)
-                    .ContinueWith(task => task.Result.IsSuccessStatusCode);
-        public Task<bool> DeleteAsync(int id)
-            => _http.DeleteAsync($"api/Usuario/{id}")
-                    .ContinueWith(task => task.Result.IsSuccessStatusCode);
+        public async Task<bool> DeleteAsync(int id)
+        {
+            var resp = await _http.DeleteAsync($"api/Usuario/{id}");
+            return resp.IsSuccessStatusCode;
+        }
     }
 }

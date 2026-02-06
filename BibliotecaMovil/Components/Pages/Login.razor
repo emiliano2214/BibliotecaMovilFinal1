@@ -1,8 +1,12 @@
 @page "/"
 @using System.Net.Http.Json
 @using BibliotecaMovil.Shared.DTOs
+@using BibliotecaMovil.Services
 @inject HttpClient Http
 @inject NavigationManager Nav
+@inject UsuarioSesionService Sesion
+
+
 
 <div style="background-color:#777FF5; min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:60px 20px 40px 20px;">
     <div style="margin-bottom:40px; text-align:center;">
@@ -32,7 +36,6 @@
 </div>
 
 @code {
-
     private string email = "";
     private string password = "";
     private string mensaje = "";
@@ -50,20 +53,26 @@
                 Password = password
             });
 
-            if (resp.IsSuccessStatusCode)
-            {
-                mensaje = "Login OK ✅";
-
-               // Nav.NavigateTo("/home");
-
-                Nav.NavigateTo("/home"); 
-            }
-            else
+            if (!resp.IsSuccessStatusCode)
             {
                 var body = await resp.Content.ReadAsStringAsync();
                 mensaje = $"Login falló: {resp.StatusCode}";
                 Console.WriteLine(body);
+                return;
             }
+
+            var login = await resp.Content.ReadFromJsonAsync<LoginResponseDto>();
+            if (login is null)
+            {
+                mensaje = "Login OK pero respuesta inválida";
+                return;
+            }
+
+            // ✅ Guardar sesión (token + user)
+            await Sesion.GuardarSesionAsync(login);
+
+            mensaje = "Login OK ✅";
+            Nav.NavigateTo("/home");
         }
         catch (Exception ex)
         {

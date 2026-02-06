@@ -13,13 +13,16 @@ public class UsuarioAuthService : IUsuarioAuthService
         _httpClient = httpClient;
     }
 
-    public async Task<bool> LoginAsync(LoginRequestDto usuario)
+    public async Task<LoginResponseDto?> LoginAsync(LoginRequestDto req)
     {
-        var response = await _httpClient.PostAsJsonAsync("api/usuario/login", usuario);
-        return response.IsSuccessStatusCode;
+        var resp = await _httpClient.PostAsJsonAsync("api/Usuario/login", req);
+        if (!resp.IsSuccessStatusCode) return null;
+
+        return await resp.Content.ReadFromJsonAsync<LoginResponseDto>();
     }
 
-    public async Task<bool> RegisterAsync(UsuarioDto usuarioDto)
+
+    public async Task<bool> RegisterAsync(LoginRequestDto usuarioDto)
     {
         var response = await _httpClient.PostAsJsonAsync("api/usuario/register", usuarioDto);
         return response.IsSuccessStatusCode;

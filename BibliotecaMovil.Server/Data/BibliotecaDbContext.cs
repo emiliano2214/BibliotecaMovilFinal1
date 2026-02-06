@@ -28,10 +28,7 @@ public class BibliotecaDbContext : DbContext
         modelBuilder.Entity<Autor>().HasKey(x => x.IdAutor);
         modelBuilder.Entity<Libro>().HasKey(x => x.IdLibro);
         modelBuilder.Entity<Usuario>().HasKey(x => x.IdUsuario);
-
-        // ✅ FAVORITOS: PK COMPUESTA (IdUsuario, IdLibro)
         modelBuilder.Entity<Favorito>().HasKey(x => new { x.IdUsuario, x.IdLibro });
-
         modelBuilder.Entity<Categoria>().HasKey(x => x.IdCategoria);
         modelBuilder.Entity<Editorial>().HasKey(x => x.IdEditorial);
         modelBuilder.Entity<Ejemplar>().HasKey(x => x.IdEjemplar);
@@ -54,7 +51,7 @@ public class BibliotecaDbContext : DbContext
             .WithMany()
             .HasForeignKey(l => l.IdEditorial);
 
-        // ✅ Favorito -> Libro / Usuario + nombre real de tabla/columna
+        // Favorito -> Libro / Usuario + nombre real de tabla/columna
         modelBuilder.Entity<Favorito>(e =>
         {
             e.ToTable("Favoritos", "dbo");

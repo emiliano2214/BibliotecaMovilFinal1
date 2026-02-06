@@ -9,10 +9,10 @@ namespace BibliotecaMovil.Shared.Interfaces
 {
     public interface IUsuarioService
     {
-        Task<List<UsuarioDto>> GetAllAsync();
-        Task<UsuarioDto?> GetByIdAsync(int id);
-        Task<bool> CreateAsync(UsuarioDto usuario);
-        Task<bool> UpdateAsync(UsuarioDto usuario);
+        Task<List<UsuarioPublicoDto>> GetAllAsync();
+        Task<UsuarioPublicoDto?> GetByIdAsync(int id);
+        Task<bool> CreateAsync(UsuarioCreadoDto usuario);
+        Task<bool> UpdateAsync(UsuarioActualizadoDto usuario);
         public Task<bool> DeleteAsync(int id);
 
     }

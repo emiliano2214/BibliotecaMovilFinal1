@@ -10,6 +10,6 @@ namespace BibliotecaMovil.Shared.DTOs
     {
         public string Token { get; set; } = string.Empty;
         public int ExpiresInMinutes { get; set; }
-        public UsuarioDto User { get; set; } = new();
+        public UsuarioPublicoDto User { get; set; } = new();
     }
 }
