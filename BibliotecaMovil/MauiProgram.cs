@@ -41,6 +41,7 @@ namespace BibliotecaMovil
             builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IReservaService, BibliotecaMovil.Services.ReservaService>();
             builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IRolService, BibliotecaMovil.Services.RolService>();
             builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.ISancionService, BibliotecaMovil.Services.SancionService>();
+            builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IUsuarioAuthService, BibliotecaMovil.Services.UsuarioAuthService>();
             builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IUsuarioService, BibliotecaMovil.Services.UsuarioService>();
             
             return builder.Build();

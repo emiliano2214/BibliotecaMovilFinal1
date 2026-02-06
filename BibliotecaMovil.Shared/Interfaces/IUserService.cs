@@ -2,8 +2,8 @@ using BibliotecaMovil.Shared.DTOs;
 
 namespace BibliotecaMovil.Shared.Interfaces;
 
-public interface IUsuarioService
+public interface IUsuarioAuthService
 {
-    Task<bool> LoginAsync(UsuarioDto usuario);
+    Task<bool> LoginAsync(LoginRequestDto usuario);
     Task<bool> RegisterAsync(UsuarioDto usuario);
 }

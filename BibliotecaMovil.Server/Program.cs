@@ -1,9 +1,10 @@
-using BibliotecaMovil.Server.Data;
+﻿using BibliotecaMovil.Server.Data;
 using BibliotecaMovil.Server.Security;
 using BibliotecaMovil.Server.Services.Security;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -47,13 +48,13 @@ builder.Services
         var key = builder.Configuration["Jwt:Key"];
 
         if (string.IsNullOrWhiteSpace(key))
-            throw new InvalidOperationException("Jwt:Key no est� configurado en appsettings.json");
+            throw new InvalidOperationException("Jwt:Key no está configurado en appsettings.json");
 
         if (string.IsNullOrWhiteSpace(issuer))
-            throw new InvalidOperationException("Jwt:Issuer no est� configurado.");
+            throw new InvalidOperationException("Jwt:Issuer no está configurado.");
 
         if (string.IsNullOrWhiteSpace(audience))
-            throw new InvalidOperationException("Jwt:Audience no est� configurado.");
+            throw new InvalidOperationException("Jwt:Audience no está configurado.");
 
         options.TokenValidationParameters = new TokenValidationParameters
         {
@@ -70,6 +71,42 @@ builder.Services
             ClockSkew = TimeSpan.FromMinutes(2)
         };
     });
+builder.Services.AddSwaggerGen(c =>
+{
+    // (Opcional) Info básica
+    c.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Title = "BibliotecaMovil API",
+        Version = "v1"
+    });
+
+    // ✅ Esquema de seguridad: Bearer JWT
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Pegá: Bearer {tu_token}   (sin comillas)"
+    });
+
+    // ✅ Requisito de seguridad global: aplica a endpoints (si tienen [Authorize], Swagger te pide token)
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 
 builder.Services.AddAuthorization();
 
