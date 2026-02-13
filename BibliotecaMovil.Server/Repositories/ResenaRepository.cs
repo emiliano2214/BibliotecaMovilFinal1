@@ -1,6 +1,6 @@
-using BibliotecaMovil.Server.Data;
+﻿using BibliotecaMovil.Server.Data;
 using BibliotecaMovil.Shared.DTOs;
-using BibliotecaMovil.Shared.Interfaces;
+using BibliotecaMovil.Server.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace BibliotecaMovil.Server.Repositories;
@@ -14,23 +14,27 @@ public class ResenaRepository : IResenaRepository
         _context = context;
     }
 
-    public async Task<List<ResenaDto>> GetResenasByLibroIdAsync(int libroId)
+    public async Task<List<ResenaDto>> GetResenasByLibroIdAsync(int libroId, CancellationToken ct = default)
     {
         return await _context.Resenas
-            .Where(r => r.IdLibro == libroId)
-            .Select(r => new ResenaDto
+            .AsNoTracking()
+            .Where(x => x.IdLibro == libroId)
+            .OrderByDescending(x => x.FechaResena)
+            .Take(30)
+            .Select(x => new ResenaDto
             {
-                IdResena = r.IdResena,
-                IdUsuario = r.IdUsuario,
-                IdLibro = r.IdLibro,
-                Titulo = null, // Not in model
-                Contenido = r.Comentario,
-                Puntuacion = r.Puntaje,
-                FechaCreacion = r.Fecha,
+                IdResena = x.IdResena,
+                IdUsuario = x.IdUsuario,
+                IdLibro = x.IdLibro,
+                Titulo = null,
+                Contenido = x.Comentario,
+                Puntuacion = x.Puntuacion,
+                FechaCreacion = x.FechaResena,
                 FechaModificacion = null
             })
-            .ToListAsync();
+            .ToListAsync(ct);
     }
+
 
     public async Task<bool> CreateResenaAsync(ResenaDto resenaDto)
     {
@@ -39,12 +43,12 @@ public class ResenaRepository : IResenaRepository
             IdUsuario = resenaDto.IdUsuario,
             IdLibro = resenaDto.IdLibro,
             Comentario = resenaDto.Contenido,
-            Puntaje = resenaDto.Puntuacion ?? 0,
-            Fecha = resenaDto.FechaCreacion
+            Puntuacion = resenaDto.Puntuacion,     // si es null, queda null (igual que la columna)
+            FechaResena = DateTime.Now             // ✅ fecha real del servidor
         };
 
         _context.Resenas.Add(resena);
-        await _context.SaveChangesAsync();
-        return true;
+        return await _context.SaveChangesAsync() > 0;
     }
+
 }

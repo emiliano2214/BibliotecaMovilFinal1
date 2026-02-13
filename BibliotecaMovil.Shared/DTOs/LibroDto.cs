@@ -8,4 +8,6 @@ public class LibroDto
     public DateTime AnioPublicacion { get; set; }
     public int IdCategoria { get; set; }
     public int IdEditorial { get; set; }
+    public List<AutorDto> Autores { get; set; } = new();
+
 }

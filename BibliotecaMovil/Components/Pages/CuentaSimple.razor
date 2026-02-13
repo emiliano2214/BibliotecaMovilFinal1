@@ -1,4 +1,6 @@
 @page "/cuenta"
+@using BibliotecaMovil.Shared.DTOs
+@inject BibliotecaMovil.Services.UsuarioSesionService Sesion
 
 <div style="background:#777FF5; min-height:100vh; display:flex; flex-direction:column;">
     <div style="padding:40px 20px 10px 20px; display:grid; grid-template-columns:auto 1fr auto auto; column-gap:10px; align-items:flex-start;">
@@ -14,7 +16,6 @@
             <span style="font-size:20px; font-weight:bold;">i</span>
         </div>
 
-        <!-- Menú -> /menu -->
         <NavLink href="/menu" style="text-decoration:none; color:black; display:block;">
             <div style="background:#0050FF; padding:8px 6px; display:flex; flex-direction:column; gap:3px; cursor:pointer;">
                 <div style="height:2px; width:20px; background:black;"></div>
@@ -25,13 +26,43 @@
     </div>
 
     <div style="flex:1; background:white; padding:20px;">
-        <div>Nombre completo</div>
-        <input style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:12px;" />
-        <div>Email</div>
-        <input style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:12px;" />
-        <div>Nombre de usuario</div>
-        <input style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:12px;" />
-        <div>Rol</div>
-        <input style="width:100%; height:34px; background:#DDDDDD; border:none;" />
+        @if (Cargando)
+        {
+            <div>Cargando...</div>
+        }
+        else if (Usuario is null)
+        {
+            <div>No hay sesión iniciada.</div>
+        }
+        else
+        {
+            <div>Nombre completo</div>
+            <input value="@Usuario.NombreCompleto" readonly
+                   style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:12px;" />
+
+            <div>Email</div>
+            <input value="@Usuario.Email" readonly
+                   style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:12px;" />
+
+            <div>Nombre de usuario</div>
+            <input value="@Usuario.Email" readonly
+                   style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:12px;" />
+
+            <div>Rol</div>
+            <input value="@Usuario.NombreRol" readonly
+                   style="width:100%; height:34px; background:#DDDDDD; border:none;" />
+        }
     </div>
 </div>
+
+@code {
+    private UsuarioPublicoDto? Usuario;
+    private bool Cargando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Usuario = await Sesion.ObtenerUsuarioAsync();
+        Cargando = false;
+    }
+}
++

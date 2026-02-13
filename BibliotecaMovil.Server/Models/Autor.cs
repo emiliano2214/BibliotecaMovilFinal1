@@ -1,3 +1,4 @@
+using BibliotecaMovil.Server.Models;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -13,5 +14,6 @@ namespace Biblioteca.Models
         public string Nacionalidad { get; set; } = string.Empty;
 
         public ICollection<Libro> Libros { get; set; } = new List<Libro>();
+        public ICollection<LibroAutor> LibroAutores { get; set; } = new List<LibroAutor>();
     }
 }

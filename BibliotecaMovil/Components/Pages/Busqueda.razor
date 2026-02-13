@@ -1,11 +1,17 @@
 @page "/busqueda"
+@using System.Net.Http.Json
+@using BibliotecaMovil.Shared.DTOs
+@inject HttpClient Http
 
 <div style="background:#777FF5; min-height:100vh; display:flex; flex-direction:column;">
     <div style="padding:40px 20px 10px 20px;">
         <div style="font-size:18px; font-weight:bold; margin-bottom:8px;">Busqueda</div>
+
         <div style="display:grid; grid-template-columns:1fr auto auto; column-gap:8px; align-items:center;">
-            <input style="width:100%; height:36px; background:#DDDDDD; border:none;" />
-            <!-- Menú -> /menu -->
+            <input @bind="TextoRapido" @bind:event="oninput"
+                   placeholder="Búsqueda rápida (opcional)"
+                   style="width:100%; height:36px; background:#DDDDDD; border:none; padding:0 10px;" />
+
             <NavLink href="/menu" style="text-decoration:none; color:black; display:block;">
                 <div style="background:#0050FF; padding:8px 6px; display:flex; flex-direction:column; gap:3px; cursor:pointer;">
                     <div style="height:2px; width:20px; background:black;"></div>
@@ -13,32 +19,222 @@
                     <div style="height:2px; width:20px; background:black;"></div>
                 </div>
             </NavLink>
-            <div style="background:#0050FF; width:34px; height:34px; display:flex; align-items:center; justify-content:center;">
-                <span style="font-size:18px;">🗓️</span>
-            </div>
+
+            <button @onclick="BuscarAsync"
+                    style="background:#0050FF; width:34px; height:34px; border:none; cursor:pointer;">
+                🔎
+            </button>
         </div>
     </div>
+
     <div style="background:white;">
         <div style="padding:14px 20px;">
             <div style="margin-bottom:6px;">Usuario</div>
-            <input style="width:100%; height:30px; background:#DDDDDD; border:none; margin-bottom:8px;" />
+            <input @bind="FiltroUsuario" @bind:event="oninput"
+                   style="width:100%; height:30px; background:#DDDDDD; border:none; margin-bottom:8px; padding:0 10px;" />
+
             <div style="margin-bottom:6px;">Libro</div>
-            <input style="width:100%; height:30px; background:#DDDDDD; border:none; margin-bottom:8px;" />
+            <input @bind="FiltroLibro" @bind:event="oninput"
+                   style="width:100%; height:30px; background:#DDDDDD; border:none; margin-bottom:8px; padding:0 10px;" />
+
             <div style="margin-bottom:6px;">Prestamo</div>
-            <input style="width:100%; height:30px; background:#DDDDDD; border:none; margin-bottom:8px;" />
+            <input @bind="FiltroPrestamo" @bind:event="oninput"
+                   style="width:100%; height:30px; background:#DDDDDD; border:none; margin-bottom:8px; padding:0 10px;" />
+
             <div style="margin-bottom:6px;">Favorito</div>
-            <input style="width:100%; height:30px; background:#DDDDDD; border:none; margin-bottom:8px;" />
+            <input @bind="FiltroFavorito" @bind:event="oninput"
+                   style="width:100%; height:30px; background:#DDDDDD; border:none; margin-bottom:8px; padding:0 10px;" />
+
             <div style="margin-bottom:6px;">Reseña</div>
-            <input style="width:100%; height:30px; background:#DDDDDD; border:none;" />
+            <input @bind="FiltroResena" @bind:event="oninput"
+                   style="width:100%; height:30px; background:#DDDDDD; border:none; padding:0 10px;" />
+
+            <div style="display:flex; gap:10px; margin-top:12px;">
+                <button @onclick="BuscarAsync"
+                        style="background:#0050FF; border:none; padding:8px 14px; cursor:pointer;">
+                    Buscar
+                </button>
+
+                <button @onclick="Limpiar"
+                        style="background:#DDDDDD; border:none; padding:8px 14px; cursor:pointer;">
+                    Limpiar
+                </button>
+            </div>
+
+            @if (!string.IsNullOrWhiteSpace(Error))
+            {
+                <div style="margin-top:10px; color:#b00020; font-weight:bold;">
+                    @Error
+                </div>
+            }
         </div>
     </div>
+
     <div style="flex:1; background:white; margin-top:10px; display:flex; flex-direction:column;">
-        <div style="background:#777FF5; color:black; padding:8px 16px; font-weight:bold;">Resultado</div>
-        <div style="flex:1;">
-            @for (int i = 0; i < 4; i++)
+        <div style="background:#777FF5; color:black; padding:8px 16px; font-weight:bold;">
+            Resultado
+        </div>
+
+        <div style="flex:1; padding:10px 16px; overflow:auto;">
+            @if (Cargando)
             {
-                <div style="height:60px; border-bottom:2px solid #777FF5;"></div>
+                <div>Cargando...</div>
+            }
+            else if (Resultado is null)
+            {
+                <div>Escribí filtros y tocá “Buscar”.</div>
+            }
+            else
+            {
+                @* Usuarios *@
+                <h4>Usuarios (@Resultado.Usuarios.Count)</h4>
+                @foreach (var u in Resultado.Usuarios)
+                {
+                    <div style="border-bottom:1px solid #ddd; padding:8px 0;">
+                        <div><b>@u.Apellido, @u.Nombre</b> — @u.Email</div>
+                        <div>Rol: @u.NombreRol</div>
+                    </div>
+                }
+
+                <h4 style="margin-top:14px;">Libros (@(Resultado.Libros?.Count ?? 0))</h4>
+                @foreach (var l in (Resultado.Libros ?? new()))
+                {
+                    <div style="border-bottom:1px solid #ddd; padding:8px 0;">
+                        <div><b>@l.Titulo</b></div>
+                        <div>CategoriaId: @l.IdCategoria — EditorialId: @l.IdEditorial</div>
+
+                        @if (!string.IsNullOrWhiteSpace(l.Resumen))
+                        {
+                            <div style="font-size:13px; opacity:.8;">@l.Resumen</div>
+                        }
+
+                        <div style="font-size:12px; opacity:.7;">
+                            Publicado: @l.AnioPublicacion.ToShortDateString()
+                        </div>
+                    </div>
+                }
+
+                <h4 style="margin-top:14px;">Préstamos (@Resultado.Prestamos.Count)</h4>
+                @foreach (var p in Resultado.Prestamos)
+                {
+                    <div style="border-bottom:1px solid #ddd; padding:8px 0;">
+                        <div><b>Préstamo #@p.IdPrestamo</b> — Estado: @p.Estado</div>
+                        <div>UsuarioId: @p.IdUsuario</div>
+                        <div style="font-size:12px; opacity:.7;">
+                            Préstamo: @p.FechaPrestamo.ToShortDateString()
+                            — Vence: @p.FechaVencimiento.ToShortDateString()
+                            @if (p.FechaDevolucion is not null)
+                            {
+                                <span> — Devuelto: @p.FechaDevolucion.Value.ToShortDateString()</span>
+                            }
+                        </div>
+                    </div>
+                }
+
+                <h4 style="margin-top:14px;">Favoritos (@Resultado.Favoritos.Count)</h4>
+                @foreach (var f in Resultado.Favoritos)
+                {
+                    <div style="border-bottom:1px solid #ddd; padding:8px 0;">
+                        <div>UsuarioId: @f.IdUsuario — LibroId: @f.IdLibro</div>
+                        <div>Agregado: @f.FechaAgregado</div>
+                    </div>
+                }
+
+                <h4 style="margin-top:14px;">Reseñas (@Resultado.Resenas.Count)</h4>
+                @foreach (var r in Resultado.Resenas)
+                {
+                    <div style="border-bottom:1px solid #ddd; padding:8px 0;">
+                        <b>Puntuación:</b> @(r.Puntuacion?.ToString("0.0") ?? "-")
+
+                        @if (!string.IsNullOrWhiteSpace(r.Titulo))
+                        {
+                            <div><b>@r.Titulo</b></div>
+                        }
+
+                        <div>@r.Contenido</div>
+                        <div style="font-size:12px; opacity:.7;">@r.FechaCreacion.ToShortDateString()</div>
+                    </div>
+                }
+
             }
         </div>
     </div>
 </div>
+
+@code {
+    private string? TextoRapido;
+    private string? FiltroUsuario;
+    private string? FiltroLibro;
+    private string? FiltroPrestamo;
+    private string? FiltroFavorito;
+    private string? FiltroResena;
+
+    private BusquedaResultadoDto? Resultado;
+    private bool Cargando;
+    private string? Error;
+
+    private async Task BuscarAsync()
+    {
+        Error = null;
+        Cargando = true;
+
+        try
+        {
+            var u = string.IsNullOrWhiteSpace(FiltroUsuario) ? TextoRapido : FiltroUsuario;
+            var l = string.IsNullOrWhiteSpace(FiltroLibro) ? TextoRapido : FiltroLibro;
+            var p = string.IsNullOrWhiteSpace(FiltroPrestamo) ? TextoRapido : FiltroPrestamo;
+            var f = string.IsNullOrWhiteSpace(FiltroFavorito) ? TextoRapido : FiltroFavorito;
+            var r = string.IsNullOrWhiteSpace(FiltroResena) ? TextoRapido : FiltroResena;
+
+            var url =
+                $"api/busqueda" +
+                $"?usuario={Uri.EscapeDataString(u ?? "")}" +
+                $"&libro={Uri.EscapeDataString(l ?? "")}" +
+                $"&prestamo={Uri.EscapeDataString(p ?? "")}" +
+                $"&favorito={Uri.EscapeDataString(f ?? "")}" +
+                $"&resena={Uri.EscapeDataString(r ?? "")}";
+
+            // 👇 ACÁ VA EL BLOQUE (reemplaza GetFromJsonAsync)
+            var resp = await Http.GetAsync(url);
+
+            var raw = await resp.Content.ReadAsStringAsync();
+            Console.WriteLine(raw); // debug (miralo en Output / consola del navegador)
+
+            if (!resp.IsSuccessStatusCode)
+            {
+                Error = $"HTTP {(int)resp.StatusCode}: {raw}";
+                Resultado = null;
+                return;
+            }
+
+            Resultado = await resp.Content.ReadFromJsonAsync<BusquedaResultadoDto>() ?? new();
+
+            // normalizar listas por si vienen null
+            Resultado.Usuarios ??= new();
+            Resultado.Libros ??= new();
+            Resultado.Prestamos ??= new();
+            Resultado.Favoritos ??= new();
+            Resultado.Resenas ??= new();
+        }
+        catch (Exception ex)
+        {
+            Error = $"Error al buscar: {ex.Message}";
+        }
+        finally
+        {
+            Cargando = false;
+        }
+    }
+
+    private void Limpiar()
+    {
+        TextoRapido = null;
+        FiltroUsuario = null;
+        FiltroLibro = null;
+        FiltroPrestamo = null;
+        FiltroFavorito = null;
+        FiltroResena = null;
+        Resultado = null;
+        Error = null;
+    }
+}

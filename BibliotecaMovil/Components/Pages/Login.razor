@@ -47,7 +47,7 @@
         mensaje = "Intentando login...";
         try
         {
-            var resp = await Http.PostAsJsonAsync("api/Usuario/login", new LoginRequestDto
+            var resp = await Http.PostAsJsonAsync("api/UsuarioAuth/login", new LoginRequestDto
             {
                 Email = email,
                 Password = password

@@ -1,6 +1,6 @@
-using Microsoft.AspNetCore.Mvc;
 using BibliotecaMovil.Shared.DTOs;
-using BibliotecaMovil.Shared.Interfaces;
+using BibliotecaMovil.Server.Repositories;
+using Microsoft.AspNetCore.Mvc;
 
 namespace BibliotecaMovil.Server.Controllers;
 
@@ -18,14 +18,14 @@ public class ResenaController : ControllerBase
     [HttpGet("libro/{libroId}")]
     public async Task<ActionResult<List<ResenaDto>>> GetResenasByLibro(int libroId)
     {
-        return await _resenaRepository.GetResenasByLibroIdAsync(libroId);
+        var resenas = await _resenaRepository.GetResenasByLibroIdAsync(libroId);
+        return Ok(resenas);
     }
 
     [HttpPost]
     public async Task<IActionResult> CreateResena([FromBody] ResenaDto resena)
     {
-        var result = await _resenaRepository.CreateResenaAsync(resena);
-        if (result) return Ok();
-        return BadRequest();
+        var ok = await _resenaRepository.CreateResenaAsync(resena);
+        return ok ? Ok() : BadRequest();
     }
 }

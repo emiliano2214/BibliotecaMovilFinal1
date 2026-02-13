@@ -8,13 +8,13 @@ namespace BibliotecaMovil.Server.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class UsuarioController : ControllerBase
+public class UsuarioAuthController : ControllerBase
 {
     private readonly IUsuarioRepository _usuarioRepository;
     private readonly IJwtTokenService _jwtTokenService;
     private readonly IPasswordService _passwordService;
 
-    public UsuarioController(
+    public UsuarioAuthController(
         IUsuarioRepository usuarioRepository,
         IJwtTokenService jwtTokenService,
         IPasswordService passwordService)
