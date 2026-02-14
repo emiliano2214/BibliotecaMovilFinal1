@@ -1,8 +1,12 @@
 @page "/cuenta"
 @using BibliotecaMovil.Shared.DTOs
+@using BibliotecaMovil.Shared.Interfaces
+@using System.ComponentModel.DataAnnotations
+@inject IUsuarioService UsuarioService
 @inject BibliotecaMovil.Services.UsuarioSesionService Sesion
 
 <div style="background:#777FF5; min-height:100vh; display:flex; flex-direction:column;">
+    <!-- header (igual al tuyo) -->
     <div style="padding:40px 20px 10px 20px; display:grid; grid-template-columns:auto 1fr auto auto; column-gap:10px; align-items:flex-start;">
         <div style="width:80px; height:80px; background:white; display:flex; align-items:center; justify-content:center;">
             <div style="width:64px; height:64px; background:gray; border-radius:32px; display:flex; align-items:center; justify-content:center;">
@@ -34,35 +38,144 @@
         {
             <div>No hay sesión iniciada.</div>
         }
+        else if (Edit is null)
+        {
+            <div>No se pudo preparar el formulario.</div>
+        }
         else
         {
-            <div>Nombre completo</div>
-            <input value="@Usuario.NombreCompleto" readonly
-                   style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:12px;" />
+            <div style="margin-bottom:12px;">
+                <strong>@Usuario.NombreCompleto</strong>
+            </div>
 
-            <div>Email</div>
-            <input value="@Usuario.Email" readonly
-                   style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:12px;" />
+            <EditForm Model="@Edit" OnValidSubmit="Guardar">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
 
-            <div>Nombre de usuario</div>
-            <input value="@Usuario.Email" readonly
-                   style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:12px;" />
+                <div>Nombre</div>
+                <InputText @bind-Value="Edit.Nombre"
+                           style="width:100%; height:34px; background:#FFFFFF; border:1px solid #DDD; margin-bottom:10px;" />
 
-            <div>Rol</div>
-            <input value="@Usuario.NombreRol" readonly
-                   style="width:100%; height:34px; background:#DDDDDD; border:none;" />
+                <div>Apellido</div>
+                <InputText @bind-Value="Edit.Apellido"
+                           style="width:100%; height:34px; background:#FFFFFF; border:1px solid #DDD; margin-bottom:10px;" />
+
+                <div>Email</div>
+                <input value="@Usuario.Email" readonly
+                       style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:10px;" />
+
+                <div>Imagen (URL)</div>
+                <InputText @bind-Value="Edit.ImgUrl"
+                           style="width:100%; height:34px; background:#FFFFFF; border:1px solid #DDD; margin-bottom:10px;" />
+
+                <div>Rol</div>
+                <input value="@Usuario.NombreRol" readonly
+                       style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:12px;" />
+
+                <div style="display:flex; gap:10px;">
+                    <button type="submit" disabled="@Guardando"
+                            style="background:#0050FF; color:white; border:none; padding:10px 14px; cursor:pointer;">
+                        @(Guardando ? "Guardando..." : "Guardar cambios")
+                    </button>
+
+                    <button type="button" @onclick="Resetear" disabled="@Guardando"
+                            style="background:#DDDDDD; color:black; border:none; padding:10px 14px; cursor:pointer;">
+                        Cancelar
+                    </button>
+                </div>
+            </EditForm>
+
+            @if (!string.IsNullOrWhiteSpace(Mensaje))
+            {
+                <div style="margin-top:10px; color:@(Ok ? "green" : "red");">
+                    @Mensaje
+                </div>
+            }
         }
     </div>
 </div>
 
 @code {
     private UsuarioPublicoDto? Usuario;
+    private UsuarioActualizadoDto? Edit;
+
     private bool Cargando = true;
+    private bool Guardando = false;
+
+    private string Mensaje = "";
+    private bool Ok = false;
 
     protected override async Task OnInitializedAsync()
     {
         Usuario = await Sesion.ObtenerUsuarioAsync();
+
+        if (Usuario is not null)
+        {
+            // Modelo editable (lo que se puede tocar)
+            Edit = new UsuarioActualizadoDto
+            {
+                IdUsuario = Usuario.IdUsuario,
+                Nombre = Usuario.Nombre,
+                Apellido = Usuario.Apellido,
+                IdRol = Usuario.IdRol,      // no editable desde UI
+                ImgUrl = Usuario.ImgUrl,
+                Activo = Usuario.Activo
+            };
+        }
+
         Cargando = false;
     }
+
+    private void Resetear()
+    {
+        if (Usuario is null || Edit is null) return;
+
+        Edit.Nombre = Usuario.Nombre;
+        Edit.Apellido = Usuario.Apellido;
+        Edit.ImgUrl = Usuario.ImgUrl;
+
+        Mensaje = "";
+        Ok = false;
+    }
+
+    private async Task Guardar()
+    {
+        if (Usuario is null || Edit is null) return;
+
+        Guardando = true;
+        Mensaje = "";
+        Ok = false;
+
+        // Normalización rápida
+        Edit.Nombre = (Edit.Nombre ?? "").Trim();
+        Edit.Apellido = string.IsNullOrWhiteSpace(Edit.Apellido) ? null : Edit.Apellido.Trim();
+        Edit.ImgUrl = string.IsNullOrWhiteSpace(Edit.ImgUrl) ? null : Edit.ImgUrl.Trim();
+
+        var exito = await UsuarioService.UpdateAsync(Edit);
+        if (!exito)
+        {
+            Ok = false;
+            Mensaje = "No se pudo guardar. Revisá el endpoint PUT api/Usuario/{id}.";
+            Guardando = false;
+            return;
+        }
+
+        // Recargar desde API para reflejar lo persistido
+        var recargado = await UsuarioService.GetByIdAsync(Usuario.IdUsuario);
+        if (recargado is not null)
+        {
+            Usuario = recargado;
+
+            // (opcional) si tu Sesion cachea el usuario, actualizala acá
+            // await Sesion.SetUsuarioAsync(recargado);
+
+            Edit.Nombre = Usuario.Nombre;
+            Edit.Apellido = Usuario.Apellido;
+            Edit.ImgUrl = Usuario.ImgUrl;
+        }
+
+        Ok = true;
+        Mensaje = "Cambios guardados ✅";
+        Guardando = false;
+    }
 }
-+

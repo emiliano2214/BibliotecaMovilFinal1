@@ -2,6 +2,7 @@
 @using BibliotecaMovil.Shared.DTOs
 @using BibliotecaMovil.Shared.Interfaces
 @inject ILibroService LibroService
+@inject IFavoritoService FavoritoService
 
 <div style="background:#777FF5; min-height:100vh; display:flex; flex-direction:column;">
     <!-- Header -->
@@ -10,7 +11,6 @@
 
         <div style="margin-top:30px; width:40px; height:40px; background:#0050FF;"></div>
 
-        <!-- Menú -> /menu -->
         <NavLink href="/menu" style="text-decoration:none; color:black; display:block;">
             <div style="background:#0050FF; padding:8px 6px; display:flex; flex-direction:column; gap:3px; cursor:pointer;">
                 <div style="height:2px; width:20px; background:black;"></div>
@@ -23,34 +23,111 @@
     <!-- Lista -->
     <div style="flex:1; background:white;">
         <div style="padding:10px 20px; font-weight:bold;">Lista de Libros</div>
-        <div>
-            @if (libros == null)
+
+        @if (cargando)
+        {
+            <div style="padding:20px;">Cargando...</div>
+        }
+        else if (error is not null)
+        {
+            <div style="padding:20px; color:#b00020; font-weight:bold;">Error: @error</div>
+        }
+        else if (!libros.Any())
+        {
+            <div style="padding:20px;">No hay libros disponibles.</div>
+        }
+        else
+        {
+            @foreach (var libro in libros)
             {
-                <div style="padding:20px;">Cargando...</div>
-            }
-            else if (!libros.Any())
-            {
-                <div style="padding:20px;">No hay libros disponibles.</div>
-            }
-            else
-            {
-                @foreach (var libro in libros)
-                {
-                    <div style="display:grid; grid-template-columns:1fr auto; align-items:center; margin:10px 0; padding:10px 20px; border-bottom:2px solid #777FF5;">
-                        <div>@libro.Titulo</div>
-                        <div style="font-size:24px;">☆</div>
+                <div style="display:grid; grid-template-columns:1fr auto; align-items:center; margin:10px 0; padding:10px 20px; border-bottom:2px solid #777FF5;">
+                    <div>@libro.Titulo</div>
+
+                    <div style="font-size:24px; cursor:pointer;" @onclick="() => ToggleFavorito(libro)">
+                        <span style="color:@(EsFavorito(libro) ? "gold" : "gray");">
+                            @(EsFavorito(libro) ? "★" : "☆")
+                        </span>
                     </div>
-                }
+                </div>
             }
-        </div>
+        }
     </div>
 </div>
 
 @code {
-    private List<LibroDto>? libros;
+    private List<LibroDto> libros = new();
+    private HashSet<int> favLibroIds = new();
+
+    private bool cargando = true;
+    private string? error;
+
+    private const int UsuarioId = 1;
 
     protected override async Task OnInitializedAsync()
     {
-        libros = await LibroService.GetLibrosAsync();
+        cargando = true;
+        error = null;
+
+        // 1) Libros
+        try
+        {
+            libros = await LibroService.GetLibrosAsync() ?? new();
+        }
+        catch (Exception ex)
+        {
+            error = "GET Libros falló: " + ex.Message;
+            cargando = false;
+            return;
+        }
+
+        // 2) Favoritos
+        try
+        {
+            var favoritos = await FavoritoService.GetFavoritosByUsuarioAsync(UsuarioId) ?? new();
+            favLibroIds = favoritos.Select(f => f.IdLibro).ToHashSet();
+        }
+        catch (Exception ex)
+        {
+            error = "GET Favoritos falló: " + ex.Message;
+            cargando = false;
+            return;
+        }
+
+        cargando = false;
+    }
+
+
+    private bool EsFavorito(LibroDto libro) => favLibroIds.Contains(libro.IdLibro);
+
+    private async Task ToggleFavorito(LibroDto libro)
+    {
+        try
+        {
+            error = null;
+            var libroId = libro.IdLibro;
+
+            if (favLibroIds.Contains(libroId))
+            {
+                var ok = await FavoritoService.RemoveFavoritoAsync(UsuarioId, libroId);
+                if (ok) favLibroIds.Remove(libroId);
+            }
+            else
+            {
+                var ok = await FavoritoService.AddFavoritoAsync(new FavoritoDto
+                {
+                    IdUsuario = UsuarioId,
+                    IdLibro = libroId,
+                    FechaAgregado = DateTime.Now
+                });
+
+                if (ok) favLibroIds.Add(libroId);
+            }
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
     }
 }

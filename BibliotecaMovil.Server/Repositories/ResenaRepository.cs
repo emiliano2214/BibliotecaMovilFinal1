@@ -1,6 +1,5 @@
 ﻿using BibliotecaMovil.Server.Data;
 using BibliotecaMovil.Shared.DTOs;
-using BibliotecaMovil.Server.Repositories;
 using Microsoft.EntityFrameworkCore;
 
 namespace BibliotecaMovil.Server.Repositories;
@@ -38,7 +37,7 @@ public class ResenaRepository : IResenaRepository
 
     public async Task<bool> CreateResenaAsync(ResenaDto resenaDto)
     {
-        var resena = new Biblioteca.Models.Resena
+        var resena = new BibliotecaMovil.Server.Models.Resena
         {
             IdUsuario = resenaDto.IdUsuario,
             IdLibro = resenaDto.IdLibro,

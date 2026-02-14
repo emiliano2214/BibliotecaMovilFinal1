@@ -1,5 +1,4 @@
-﻿using Biblioteca.Models;
-using BibliotecaMovil.Server.Models; // (si acá tenés LibroAutor)
+﻿using BibliotecaMovil.Server.Models; 
 using Microsoft.EntityFrameworkCore;
 
 namespace BibliotecaMovil.Server.Data;

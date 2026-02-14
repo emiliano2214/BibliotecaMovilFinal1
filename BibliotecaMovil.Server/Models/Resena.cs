@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace Biblioteca.Models
+namespace BibliotecaMovil.Server.Models
 {
     public class Resena
     {

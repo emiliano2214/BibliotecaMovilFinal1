@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace Biblioteca.Models
+namespace BibliotecaMovil.Server.Models
 {
     public class Usuario
     {

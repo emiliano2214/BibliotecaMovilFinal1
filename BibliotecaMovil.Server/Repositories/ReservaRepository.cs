@@ -1,6 +1,5 @@
 using BibliotecaMovil.Server.Data;
 using BibliotecaMovil.Shared.DTOs;
-using BibliotecaMovil.Shared.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace BibliotecaMovil.Server.Repositories;
@@ -31,7 +30,7 @@ public class ReservaRepository : IReservaRepository
 
     public async Task<bool> CreateReservaAsync(ReservaDto reservaDto)
     {
-        var reserva = new Biblioteca.Models.Reserva
+        var reserva = new BibliotecaMovil.Server.Models.Reserva
         {
             IdUsuario = reservaDto.IdUsuario,
             IdLibro = reservaDto.IdEjemplar, // Assuming IdEjemplar holds IdLibro

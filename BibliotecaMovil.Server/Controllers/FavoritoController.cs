@@ -1,6 +1,6 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using BibliotecaMovil.Shared.DTOs;
-using BibliotecaMovil.Shared.Interfaces;
+using BibliotecaMovil.Server.Repositories;
 
 namespace BibliotecaMovil.Server.Controllers;
 
@@ -29,10 +29,11 @@ public class FavoritoController : ControllerBase
         return result ? Ok() : BadRequest();
     }
 
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> RemoveFavorito(int id)
+    // ✅ PK compuesta: usuarioId + libroId
+    [HttpDelete("usuario/{usuarioId}/libro/{libroId}")]
+    public async Task<IActionResult> RemoveFavorito(int usuarioId, int libroId)
     {
-        var result = await _favoritoRepository.RemoveFavoritoAsync(id);
+        var result = await _favoritoRepository.RemoveFavoritoAsync(usuarioId, libroId);
         return result ? Ok() : NotFound();
     }
 }

@@ -1,6 +1,5 @@
 using BibliotecaMovil.Server.Data;
 using BibliotecaMovil.Shared.DTOs;
-using BibliotecaMovil.Shared.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace BibliotecaMovil.Server.Repositories;
@@ -34,26 +33,28 @@ public class FavoritoRepository : IFavoritoRepository
 
         if (exists) return false;
 
-        _context.Favoritos.Add(new Biblioteca.Models.Favorito
+        var fecha = dto.FechaAgregado == default ? DateTime.Now : dto.FechaAgregado;
+
+        _context.Favoritos.Add(new BibliotecaMovil.Server.Models.Favorito
         {
             IdUsuario = dto.IdUsuario,
             IdLibro = dto.IdLibro,
-            FechaAgregado = dto.FechaAgregado
+            FechaAgregado = fecha
         });
 
         await _context.SaveChangesAsync();
         return true;
     }
 
-    public async Task<bool> RemoveFavoritoAsync(int id)
+
+    public async Task<bool> RemoveFavoritoAsync(int usuarioId, int libroId)
     {
-        var favorito = await _context.Favoritos.FindAsync(id);
-        if (favorito != null)
-        {
-            _context.Favoritos.Remove(favorito);
-            await _context.SaveChangesAsync();
-            return true;
-        }
-        return false;
+        var fav = await _context.Favoritos
+            .FirstOrDefaultAsync(f => f.IdUsuario == usuarioId && f.IdLibro == libroId);
+
+        if (fav is null) return false;
+
+        _context.Favoritos.Remove(fav);
+        return await _context.SaveChangesAsync() > 0;
     }
 }

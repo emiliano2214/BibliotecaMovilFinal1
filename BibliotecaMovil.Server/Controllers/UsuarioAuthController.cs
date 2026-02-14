@@ -10,15 +10,18 @@ namespace BibliotecaMovil.Server.Controllers;
 [Route("api/[controller]")]
 public class UsuarioAuthController : ControllerBase
 {
+    private readonly IUsuarioAuthRepository _usuarioAuthRepository;
     private readonly IUsuarioRepository _usuarioRepository;
     private readonly IJwtTokenService _jwtTokenService;
     private readonly IPasswordService _passwordService;
 
     public UsuarioAuthController(
+        IUsuarioAuthRepository usuarioAuthRepository,
         IUsuarioRepository usuarioRepository,
         IJwtTokenService jwtTokenService,
         IPasswordService passwordService)
     {
+        _usuarioAuthRepository = usuarioAuthRepository;
         _usuarioRepository = usuarioRepository;
         _jwtTokenService = jwtTokenService;
         _passwordService = passwordService;
@@ -27,7 +30,7 @@ public class UsuarioAuthController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequestDto req)
     {
-        var existing = await _usuarioRepository.GetUsuarioAuthByEmailAsync(req.Email);
+        var existing = await _usuarioAuthRepository.GetUsuarioAuthByEmailAsync(req.Email);
 
         if (existing is null)
             return Unauthorized(new { message = "Credenciales inválidas" });

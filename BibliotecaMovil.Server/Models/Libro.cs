@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using BibliotecaMovil.Server.Models;
 
 
-namespace Biblioteca.Models
+namespace BibliotecaMovil.Server.Models
 {
     public class Libro
     {

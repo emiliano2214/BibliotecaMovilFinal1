@@ -1,6 +1,5 @@
 using BibliotecaMovil.Server.Data;
 using BibliotecaMovil.Shared.DTOs;
-using BibliotecaMovil.Shared.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace BibliotecaMovil.Server.Repositories;
@@ -32,7 +31,7 @@ public class PrestamoRepository : IPrestamoRepository
 
     public async Task<bool> CreatePrestamoAsync(PrestamoDto prestamoDto)
     {
-        var prestamo = new Biblioteca.Models.Prestamo
+        var prestamo = new BibliotecaMovil.Server.Models.Prestamo
         {
             IdUsuario = prestamoDto.IdUsuario,
             FechaInicio = prestamoDto.FechaPrestamo,

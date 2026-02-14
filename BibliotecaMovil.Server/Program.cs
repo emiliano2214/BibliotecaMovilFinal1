@@ -29,6 +29,7 @@ builder.Services.AddScoped<BibliotecaMovil.Server.Repositories.IResenaRepository
 builder.Services.AddScoped<BibliotecaMovil.Server.Repositories.IReservaRepository, BibliotecaMovil.Server.Repositories.ReservaRepository>();
 builder.Services.AddScoped<BibliotecaMovil.Server.Repositories.IRolRepository, BibliotecaMovil.Server.Repositories.RolRepository>();
 builder.Services.AddScoped<BibliotecaMovil.Server.Repositories.ISancionRepository, BibliotecaMovil.Server.Repositories.SancionRepository>();
+builder.Services.AddScoped<BibliotecaMovil.Server.Repositories.IUsuarioAuthRepository, BibliotecaMovil.Server.Repositories.UsuarioAuthRepository>();
 builder.Services.AddScoped<BibliotecaMovil.Server.Repositories.IUsuarioRepository, BibliotecaMovil.Server.Repositories.UsuarioRepository>();
 builder.Services.AddScoped<BibliotecaMovil.Server.Security.IJwtTokenService,BibliotecaMovil.Server.Security.JwtTokenService>();
 builder.Services.AddSingleton<BibliotecaMovil.Server.Security.IPasswordService, BibliotecaMovil.Server.Security.PasswordService>();

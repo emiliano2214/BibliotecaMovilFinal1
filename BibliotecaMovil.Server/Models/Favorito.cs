@@ -1,7 +1,7 @@
 using System;
 using System.ComponentModel.DataAnnotations.Schema;
 
-namespace Biblioteca.Models
+namespace BibliotecaMovil.Server.Models
 {
     [Table("Favoritos", Schema = "dbo")]
     public class Favorito

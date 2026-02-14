@@ -21,9 +21,41 @@ public class EditorialRepository : IEditorialRepository
             {
                 IdEditorial = e.IdEditorial,
                 Nombre = e.Nombre,
-                Pais = e.Pais
+                Pais = e.Pais,
+                Ciudad = e.Ciudad
             })
             .ToListAsync();
+    }
+
+    public async Task<EditorialDetalleDto?> GetDetalleEditorialAsync(int id)
+    {
+        return await _context.Editoriales
+            .Where(e => e.IdEditorial == id)
+            .Select(e => new EditorialDetalleDto
+            {
+                IdEditorial = e.IdEditorial,
+                Nombre = e.Nombre,
+                Pais = e.Pais,
+                Ciudad = e.Ciudad,
+                Libros = e.Libros.Select(l => new LibroConEjemplaresDto
+                {
+                    IdLibro = l.IdLibro,
+                    Titulo = l.Titulo,
+
+                    // Opción A: traer ejemplares
+                    Ejemplares = l.Ejemplares.Select(x => new EjemplarDto
+                    {
+                        IdEjemplar = x.IdEjemplar,
+                        CodigoInventario = x.CodigoInventario,
+                        Ubicacion = x.Ubicacion,
+                        Estado = x.Estado
+                    }).ToList(),
+
+                    // Opción B: si no querés traer todos, solo el conteo:
+                    CantidadEjemplares = l.Ejemplares.Count()
+                }).ToList()
+            })
+            .FirstOrDefaultAsync();
     }
 
     public async Task<EditorialDto?> GetEditorialByIdAsync(int id)
@@ -35,7 +67,8 @@ public class EditorialRepository : IEditorialRepository
         {
             IdEditorial = editorial.IdEditorial,
             Nombre = editorial.Nombre,
-            Pais = editorial.Pais
+            Pais = editorial.Pais,
+            Ciudad = editorial.Ciudad
         };
     }
 }
