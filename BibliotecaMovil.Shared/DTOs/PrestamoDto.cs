@@ -8,4 +8,6 @@ public class PrestamoDto
     public DateTime FechaVencimiento { get; set; }
     public DateTime? FechaDevolucion { get; set; }
     public string Estado { get; set; } = "ACTIVO";
+    public string TituloLibro { get; set; } = "";
+
 }

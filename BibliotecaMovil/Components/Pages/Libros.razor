@@ -6,23 +6,53 @@
 
 <div style="background:#777FF5; min-height:100vh; display:flex; flex-direction:column;">
     <!-- Header -->
-    <div style="padding:60px 20px 20px 20px; display:grid; grid-template-columns:auto auto auto;">
-        <div style="grid-column:1 / span 3; font-size:28px; font-weight:bold;">Libros</div>
+    <!-- Header -->
+    <div style="padding:60px 20px 20px 20px; display:flex; flex-direction:column; gap:30px;">
 
-        <div style="margin-top:30px; width:40px; height:40px; background:#0050FF;"></div>
+        <!-- Título -->
+        <div style="font-size:28px; font-weight:bold;">
+            Libros
+        </div>
 
-        <NavLink href="/menu" style="text-decoration:none; color:black; display:block;">
-            <div style="background:#0050FF; padding:8px 6px; display:flex; flex-direction:column; gap:3px; cursor:pointer;">
-                <div style="height:2px; width:20px; background:black;"></div>
-                <div style="height:2px; width:20px; background:black;"></div>
-                <div style="height:2px; width:20px; background:black;"></div>
-            </div>
-        </NavLink>
+        <!-- Línea inferior (cuadrado izquierda + hamburguesa derecha) -->
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+
+            <!-- Cuadrado izquierdo -->
+            <div style="width:40px; height:40px; background:#0050FF;"></div>
+
+            <!-- Botón hamburguesa derecho -->
+            <NavLink href="/menu" style="text-decoration:none;">
+                <div style="
+                width:40px; height:40px;
+                background:#0050FF;
+                display:flex;
+                flex-direction:column;
+                align-items:center;
+                justify-content:center;
+                gap:4px;
+                cursor:pointer;
+            ">
+                    <div style="height:2px; width:18px; background:black;"></div>
+                    <div style="height:2px; width:18px; background:black;"></div>
+                    <div style="height:2px; width:18px; background:black;"></div>
+                </div>
+            </NavLink>
+
+        </div>
+
     </div>
 
     <!-- Lista -->
     <div style="flex:1; background:white;">
         <div style="padding:10px 20px; font-weight:bold;">Lista de Libros</div>
+        @if (!string.IsNullOrWhiteSpace(mensaje))
+        {
+            <div style="padding:10px 20px; color:green; font-weight:bold;">@mensaje</div>
+        }
+        @if (!string.IsNullOrWhiteSpace(error))
+        {
+            <div style="padding:10px 20px; color:#b00020; font-weight:bold;">Error: @error</div>
+        }
 
         @if (cargando)
         {
@@ -98,18 +128,29 @@
 
 
     private bool EsFavorito(LibroDto libro) => favLibroIds.Contains(libro.IdLibro);
+    private string? mensaje;
 
     private async Task ToggleFavorito(LibroDto libro)
     {
         try
         {
             error = null;
+            mensaje = null;
+
             var libroId = libro.IdLibro;
 
             if (favLibroIds.Contains(libroId))
             {
                 var ok = await FavoritoService.RemoveFavoritoAsync(UsuarioId, libroId);
-                if (ok) favLibroIds.Remove(libroId);
+                if (ok)
+                {
+                    favLibroIds.Remove(libroId);
+                    mensaje = "❌ Favorito eliminado";
+                }
+                else
+                {
+                    error = "No se pudo eliminar (no existía o falló).";
+                }
             }
             else
             {
@@ -120,14 +161,21 @@
                     FechaAgregado = DateTime.Now
                 });
 
-                if (ok) favLibroIds.Add(libroId);
+                if (ok)
+                {
+                    favLibroIds.Add(libroId);
+                    mensaje = "✅ Favorito agregado";
+                }
+                else
+                {
+                    error = "No se pudo agregar (ya existía o falló).";
+                }
             }
-
-            StateHasChanged();
         }
         catch (Exception ex)
         {
             error = ex.Message;
         }
     }
+
 }

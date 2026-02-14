@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using BibliotecaMovil.Shared.DTOs;
-using BibliotecaMovil.Shared.Interfaces;
+using BibliotecaMovil.Server.Repositories;
 
 namespace BibliotecaMovil.Server.Controllers;
 
@@ -8,24 +8,24 @@ namespace BibliotecaMovil.Server.Controllers;
 [Route("api/[controller]")]
 public class PrestamoController : ControllerBase
 {
-    private readonly IPrestamoRepository _prestamoRepository;
+    private readonly IPrestamoRepository _repo;
 
-    public PrestamoController(IPrestamoRepository prestamoRepository)
+    public PrestamoController(IPrestamoRepository repo)
     {
-        _prestamoRepository = prestamoRepository;
+        _repo = repo;
     }
 
-    [HttpGet("usuario/{usuarioId}")]
-    public async Task<ActionResult<List<PrestamoDto>>> GetPrestamosByUsuario(int usuarioId)
+    [HttpGet("usuario/{usuarioId:int}")]
+    public async Task<ActionResult<List<PrestamoDto>>> GetByUsuario(int usuarioId)
     {
-        return await _prestamoRepository.GetPrestamosByUsuarioIdAsync(usuarioId);
+        var data = await _repo.GetPrestamosByUsuarioIdAsync(usuarioId);
+        return Ok(data);
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreatePrestamo([FromBody] PrestamoDto prestamo)
+    public async Task<ActionResult> Create([FromBody] PrestamoDto dto)
     {
-        var result = await _prestamoRepository.CreatePrestamoAsync(prestamo);
-        if (result) return Ok();
-        return BadRequest();
+        var ok = await _repo.CreatePrestamoAsync(dto);
+        return ok ? Ok() : BadRequest();
     }
 }

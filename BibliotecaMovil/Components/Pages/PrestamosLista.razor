@@ -1,4 +1,4 @@
-@page "/prestamos"
+﻿@page "/prestamos"
 @using BibliotecaMovil.Shared.DTOs
 @using BibliotecaMovil.Shared.Interfaces
 @inject IPrestamoService PrestamoService
@@ -7,7 +7,7 @@
     <!-- Header -->
     <div style="padding:60px 20px 20px 20px; display:grid; grid-template-columns:1fr auto; align-items:flex-start;">
         <div style="font-size:28px; font-weight:bold;">Prestamos</div>
-        <!-- Men� -> /menu -->
+
         <NavLink href="/menu" style="text-decoration:none; color:black; display:block;">
             <div style="background:#0050FF; padding:8px 6px; display:flex; flex-direction:column; gap:3px; cursor:pointer;">
                 <div style="height:2px; width:20px; background:black;"></div>
@@ -20,9 +20,97 @@
     <!-- Lista -->
     <div style="flex:1; background:white; padding:20px;">
         <div style="font-weight:bold; margin-bottom:10px;">Lista de Prestamos</div>
-        @for (int i = 0; i < 3; i++)
+
+        @if (isLoading)
         {
-            <div style="height:70px; border-bottom:2px solid #777FF5; margin-bottom:10px;"></div>
+            <div style="padding:12px; border:2px solid #777FF5; border-radius:8px;">
+                Cargando préstamos...
+            </div>
+        }
+        else if (!string.IsNullOrWhiteSpace(error))
+        {
+            <div style="padding:12px; border:2px solid #ff3b3b; border-radius:8px; background:#ffecec;">
+                <div style="font-weight:bold;">Error</div>
+                <div style="font-size:14px;">@error</div>
+            </div>
+        }
+        else if (prestamos.Count == 0)
+        {
+            <div style="padding:12px; border:2px dashed #777FF5; border-radius:8px;">
+                No tenés préstamos registrados.
+            </div>
+        }
+        else
+        {
+            <!-- Encabezados de columnas -->
+            <div style="
+                    display:grid;
+                    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+                    font-weight:bold;
+                    padding:10px 8px;
+                    border-bottom:3px solid #777FF5;
+                    margin-bottom:10px;
+                ">
+                <div>Libro</div>
+                <div>Prestado</div>
+                <div>Vence</div>
+                <div>Devolución</div>
+                <div>Estado</div>
+            </div>
+
+            @foreach (var p in prestamos)
+            {
+                <div style="
+                            display:grid;
+                            grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
+                            align-items:center;
+                            padding:12px 8px;
+                            border-bottom:2px solid #777FF5;
+                            margin-bottom:10px;
+                            gap:10px;
+                        ">
+                    <div style="font-weight:bold;">@p.TituloLibro</div>
+                    <div>@p.FechaPrestamo.ToString("dd/MM/yyyy")</div>
+                    <div>@p.FechaVencimiento.ToString("dd/MM/yyyy")</div>
+                    <div>
+                        @(p.FechaDevolucion is null
+                                        ? "Pendiente"
+                                        : p.FechaDevolucion.Value.ToString("dd/MM/yyyy"))
+            </div>
+            <div style="font-weight:bold;">@p.Estado</div>
+        </div>
+                }
         }
     </div>
 </div>
+
+@code {
+    private bool isLoading = true;
+    private string? error;
+    private List<PrestamoDto> prestamos = new();
+
+    private int usuarioId = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            isLoading = true;
+            error = null;
+
+            prestamos = await PrestamoService.GetPrestamosByUsuarioIdAsync(usuarioId);
+
+            prestamos = prestamos
+                .OrderByDescending(p => p.FechaPrestamo)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+}

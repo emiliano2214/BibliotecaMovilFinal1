@@ -17,6 +17,8 @@ public class PrestamoRepository : IPrestamoRepository
     {
         return await _context.Prestamos
             .Where(p => p.IdUsuario == usuarioId)
+            .Include(p => p.Ejemplar)
+                .ThenInclude(e => e.Libro)
             .Select(p => new PrestamoDto
             {
                 IdPrestamo = p.IdPrestamo,
@@ -24,10 +26,16 @@ public class PrestamoRepository : IPrestamoRepository
                 FechaPrestamo = p.FechaInicio,
                 FechaVencimiento = p.FechaVencimiento,
                 FechaDevolucion = p.FechaDevolucion,
-                Estado = p.Estado
+                Estado = p.Estado,
+
+                // si no hay navegación, evitamos null
+                TituloLibro = p.Ejemplar != null && p.Ejemplar.Libro != null
+                    ? p.Ejemplar.Libro.Titulo
+                    : "(Sin título)"
             })
             .ToListAsync();
     }
+
 
     public async Task<bool> CreatePrestamoAsync(PrestamoDto prestamoDto)
     {
