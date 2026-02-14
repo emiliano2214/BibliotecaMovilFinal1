@@ -1,9 +1,12 @@
-using Microsoft.AspNetCore.Mvc;
+using BibliotecaMovil.Server.Services.Security;
 using BibliotecaMovil.Shared.DTOs;
-using BibliotecaMovil.Shared.Interfaces;
+using BibliotecaMovil.Server.Repositories;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace BibliotecaMovil.Server.Controllers;
 
+[Authorize(Roles = "Lector")]
 [ApiController]
 [Route("api/[controller]")]
 public class ReservaController : ControllerBase
@@ -27,5 +30,16 @@ public class ReservaController : ControllerBase
         var result = await _reservaRepository.CreateReservaAsync(reserva);
         if (result) return Ok();
         return BadRequest();
+    }
+
+    [Authorize(Roles = "Lector")]
+    [HttpDelete("{reservaId:int}")]
+    public async Task<IActionResult> Cancelar(int reservaId)
+    {
+        var userId = User.GetUsuarioIdOrThrow();
+
+        // repo debe validar que la reserva sea del userId y esté activa
+        var ok = await _reservaRepository.CancelarReservaAsync(reservaId, userId);
+        return ok ? NoContent() : BadRequest();
     }
 }

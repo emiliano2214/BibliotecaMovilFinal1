@@ -1,8 +1,10 @@
 @page "/home"
+@using Microsoft.AspNetCore.Authorization
 @using BibliotecaMovil.Shared.DTOs
 @using BibliotecaMovil.Services
 @inject UsuarioSesionService Sesion
 @inject NavigationManager Nav
+@attribute [Authorize]
 
 <div style="background-color:#777FF5; min-height:100vh; display:flex; flex-direction:column;">
     <!-- Header -->

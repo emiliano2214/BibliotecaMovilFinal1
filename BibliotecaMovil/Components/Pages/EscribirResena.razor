@@ -1,4 +1,6 @@
 @page "/resena-nueva"
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin,Lector")]
 
 
 <div style="background:#777FF5; min-height:100vh; display:flex; flex-direction:column;">

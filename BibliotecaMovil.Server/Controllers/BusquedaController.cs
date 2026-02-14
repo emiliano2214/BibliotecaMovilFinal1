@@ -1,11 +1,12 @@
-﻿using BibliotecaMovil.Server.Models;
-using BibliotecaMovil.Server.Data;
+﻿using BibliotecaMovil.Server.Data;
+using BibliotecaMovil.Server.Models;
 using BibliotecaMovil.Shared.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace BibliotecaMovil.Server.Controllers;
-
+[Authorize(Roles = "Admin,Bibliotecario")]
 [ApiController]
 [Route("api/[controller]")]
 public sealed class BusquedaController : ControllerBase

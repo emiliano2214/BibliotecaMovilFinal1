@@ -1,8 +1,12 @@
 @page "/libros"
 @using BibliotecaMovil.Shared.DTOs
 @using BibliotecaMovil.Shared.Interfaces
+@using Microsoft.AspNetCore.Authorization
 @inject ILibroService LibroService
 @inject IFavoritoService FavoritoService
+@attribute [Authorize(Roles = "Lector")]
+@inject BibliotecaMovil.Services.UsuarioSesionService Sesion
+
 
 <div style="background:#777FF5; min-height:100vh; display:flex; flex-direction:column;">
     <!-- Header -->
@@ -91,10 +95,20 @@
     private bool cargando = true;
     private string? error;
 
-    private const int UsuarioId = 1;
+    private int usuarioId;
+    private UsuarioPublicoDto? usuario;
 
     protected override async Task OnInitializedAsync()
     {
+        usuario = await Sesion.ObtenerUsuarioAsync();
+        if (usuario is null)
+        {
+            error = "No hay sesión iniciada.";
+            cargando = false;
+            return;
+        }
+
+        usuarioId = usuario.IdUsuario;
         cargando = true;
         error = null;
 
@@ -113,7 +127,7 @@
         // 2) Favoritos
         try
         {
-            var favoritos = await FavoritoService.GetFavoritosByUsuarioAsync(UsuarioId) ?? new();
+            var favoritos = await FavoritoService.GetFavoritosByUsuarioAsync(usuarioId) ?? new();
             favLibroIds = favoritos.Select(f => f.IdLibro).ToHashSet();
         }
         catch (Exception ex)
@@ -141,7 +155,7 @@
 
             if (favLibroIds.Contains(libroId))
             {
-                var ok = await FavoritoService.RemoveFavoritoAsync(UsuarioId, libroId);
+                var ok = await FavoritoService.RemoveFavoritoAsync(usuarioId, libroId);
                 if (ok)
                 {
                     favLibroIds.Remove(libroId);
@@ -156,7 +170,7 @@
             {
                 var ok = await FavoritoService.AddFavoritoAsync(new FavoritoDto
                 {
-                    IdUsuario = UsuarioId,
+                    IdUsuario = usuarioId,
                     IdLibro = libroId,
                     FechaAgregado = DateTime.Now
                 });

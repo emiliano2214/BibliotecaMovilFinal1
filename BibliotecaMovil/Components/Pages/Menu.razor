@@ -26,12 +26,15 @@
             </div>
         </NavLink>
 
-        <NavLink href="/busqueda" style="@LinkStyle">
-            <div style="@CardStyle">
-                <img src="images/icon_search.png" alt="Busqueda" style="@IconStyle" />
-                <div style="@TextStyle">Búsqueda</div>
-            </div>
-        </NavLink>
+        <AuthorizeView Roles="Admin,Bibliotecario">
+            <NavLink href="/busqueda" style="@LinkStyle">
+                <div style="@CardStyle">
+                    <img src="images/icon_search.png" alt="Busqueda" style="@IconStyle" />
+                    <div style="@TextStyle">Búsqueda</div>
+                </div>
+            </NavLink>
+        </AuthorizeView>
+        
 
         <NavLink href="/resenas" style="@LinkStyle">
             <div style="@CardStyle">
@@ -47,12 +50,14 @@
             </div>
         </NavLink>
 
+        <AuthorizeView Roles="Admin,Bibliotecario">
         <NavLink href="/editoriales" style="@LinkStyle">
             <div style="@CardStyle">
                 <img src="images/icon_building.png" alt="Editoriales" style="@IconStyle" />
                 <div style="@TextStyle">Editoriales</div>
             </div>
         </NavLink>
+        </AuthorizeView>
 
         <div style="@CardStyle" @onclick="Logout">
             <img src="images/icon_exit.png" alt="Salir" style="@IconStyle" />

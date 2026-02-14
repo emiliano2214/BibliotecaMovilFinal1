@@ -1,7 +1,10 @@
 @page "/ejemplares"
 @using BibliotecaMovil.Shared.DTOs
 @using BibliotecaMovil.Shared.Interfaces
+@using Microsoft.AspNetCore.Authorization
 @inject IEditorialService EditorialService
+@attribute [Authorize(Roles = "Admin,Bibliotecario")]
+
 
 <div style="background:#777FF5; min-height:100vh; display:flex; flex-direction:column;">
     <div style="padding:40px 20px 10px 20px; display:grid; grid-template-columns:1fr auto auto; column-gap:10px;">

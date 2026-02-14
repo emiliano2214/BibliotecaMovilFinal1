@@ -2,7 +2,8 @@
 @using BibliotecaMovil.Shared.DTOs
 @using BibliotecaMovil.Shared.Interfaces
 @inject IEditorialService EditorialService
-
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "Admin")]
 <div style="background:#777FF5; min-height:100vh; display:flex; flex-direction:column;">
     <div style="padding:40px 20px 10px 20px; display:grid; grid-template-columns:1fr auto; align-items:center;">
         <div style="font-size:26px; font-weight:bold;">Editorial</div>

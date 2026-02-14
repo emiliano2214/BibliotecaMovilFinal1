@@ -1,4 +1,4 @@
-using BibliotecaMovil.Server.Data;
+﻿using BibliotecaMovil.Server.Data;
 using BibliotecaMovil.Shared.DTOs;
 using Microsoft.EntityFrameworkCore;
 
@@ -43,4 +43,29 @@ public class ReservaRepository : IReservaRepository
         await _context.SaveChangesAsync();
         return true;
     }
+
+    public async Task<bool> CancelarReservaAsync(int reservaId, int userId)
+    {
+        var reserva = await _context.Reservas
+            .FirstOrDefaultAsync(r => r.IdReserva == reservaId && r.IdUsuario == userId);
+
+        if (reserva is null)
+            return false; // no existe o no es del usuario
+
+        // ✅ validar "activa"
+        var estado = (reserva.Estado ?? "").Trim();
+
+        // Ajustá estos strings a tus estados reales
+        if (estado.Equals("Cancelada", StringComparison.OrdinalIgnoreCase) ||
+            estado.Equals("Cumplida", StringComparison.OrdinalIgnoreCase) ||
+            estado.Equals("Vencida", StringComparison.OrdinalIgnoreCase))
+        {
+            return false; // ya no se puede cancelar
+        }
+
+        reserva.Estado = "Cancelada";
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
 }

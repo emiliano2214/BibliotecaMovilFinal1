@@ -1,6 +1,8 @@
 @page "/busqueda"
+@attribute [Authorize(Roles = "Admin,Bibliotecario")]
 @using System.Net.Http.Json
 @using BibliotecaMovil.Shared.DTOs
+@using Microsoft.AspNetCore.Authorization
 @inject HttpClient Http
 
 <div style="background:#777FF5; min-height:100vh; display:flex; flex-direction:column;">

@@ -1,9 +1,10 @@
-using BibliotecaMovil.Shared.DTOs;
 using BibliotecaMovil.Server.Repositories;
+using BibliotecaMovil.Shared.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace BibliotecaMovil.Server.Controllers;
-
+[Authorize(Roles = "Lector,Admin")]
 [ApiController]
 [Route("api/[controller]")]
 public class ResenaController : ControllerBase

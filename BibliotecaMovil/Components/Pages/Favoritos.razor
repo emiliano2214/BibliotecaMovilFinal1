@@ -1,7 +1,10 @@
 ﻿@page "/favoritos"
 @using BibliotecaMovil.Shared.DTOs
 @using BibliotecaMovil.Shared.Interfaces
+@using Microsoft.AspNetCore.Authorization
 @inject IFavoritoService FavoritoService
+@attribute [Authorize(Roles = "Lector")]
+@inject BibliotecaMovil.Services.UsuarioSesionService Sesion
 
 <div style="background:#777FF5; min-height:100vh; display:flex; flex-direction:column;">
     <div style="padding:40px 20px 10px 20px; display:grid; grid-template-columns:1fr auto; column-gap:10px;">
@@ -65,10 +68,23 @@
     private string? error;
     private string filtro = "";
 
-    // Por ahora fijo (después lo sacás del login/sesión)
-    private int usuarioId = 1;
+    private int usuarioId;                 // ✅ ahora existe
+    private UsuarioPublicoDto? Usuario;    // opcional, por si querés mostrar nombre
 
-    protected override async Task OnInitializedAsync() => await Cargar();
+    protected override async Task OnInitializedAsync()
+    {
+        Usuario = await Sesion.ObtenerUsuarioAsync();
+
+        if (Usuario is null)
+        {
+            error = "No hay sesión iniciada.";
+            favoritos = new(); // para que no quede null
+            return;
+        }
+
+        usuarioId = Usuario.IdUsuario;     // ✅ sale de la sesión
+        await Cargar();
+    }
 
     private IEnumerable<FavoritoDto> Filtrados =>
         favoritos is null
@@ -95,7 +111,7 @@
         try
         {
             error = null;
-            await FavoritoService.RemoveFavoritoAsync(usuarioId, idLibro); // ✅ firma correcta
+            await FavoritoService.RemoveFavoritoAsync(usuarioId, idLibro);
             await Cargar();
         }
         catch (Exception ex)

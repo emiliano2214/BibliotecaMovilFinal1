@@ -1,7 +1,9 @@
 @page "/cuenta"
+@attribute [Authorize]
 @using BibliotecaMovil.Shared.DTOs
 @using BibliotecaMovil.Shared.Interfaces
 @using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authorization
 @inject IUsuarioService UsuarioService
 @inject BibliotecaMovil.Services.UsuarioSesionService Sesion
 
