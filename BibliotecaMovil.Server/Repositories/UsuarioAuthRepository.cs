@@ -33,7 +33,8 @@ namespace BibliotecaMovil.Server.Repositories
                 IdRol = usuario.IdRol,
                 NombreRol = usuario.Rol?.Nombre ?? string.Empty,
                 Nombre = usuario.Nombre,
-                Apellido = usuario.Apellido
+                Apellido = usuario.Apellido,
+                ImgUrl = usuario.ImgUrl    
             };
         }
     }

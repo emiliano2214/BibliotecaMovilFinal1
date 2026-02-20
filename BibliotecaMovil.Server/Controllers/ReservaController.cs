@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BibliotecaMovil.Server.Controllers;
 
-[Authorize(Roles = "Lector")]
+[Authorize]
 [ApiController]
 [Route("api/[controller]")]
 public class ReservaController : ControllerBase

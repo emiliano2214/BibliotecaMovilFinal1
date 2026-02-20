@@ -2,6 +2,7 @@ using BibliotecaMovil.Server.Data;
 using BibliotecaMovil.Shared.DTOs;
 using BibliotecaMovil.Shared.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using BibliotecaMovil.Server.Models;
 
 namespace BibliotecaMovil.Server.Repositories;
 
@@ -70,5 +71,47 @@ public class EditorialRepository : IEditorialRepository
             Pais = editorial.Pais,
             Ciudad = editorial.Ciudad
         };
+    }
+    public async Task<EditorialDto> CreateEditorialAsync(EditorialDto dto)
+    {
+        // Validación mínima (opcional pero recomendable)
+        if (string.IsNullOrWhiteSpace(dto.Nombre))
+            throw new Exception("El nombre de la editorial es obligatorio.");
+
+        var entity = new Editorial
+        {
+            // NO setear IdEditorial (lo genera la DB)
+            Nombre = dto.Nombre.Trim(),
+            Pais = string.IsNullOrWhiteSpace(dto.Pais) ? null : dto.Pais.Trim(),
+            Ciudad = string.IsNullOrWhiteSpace(dto.Ciudad) ? null : dto.Ciudad.Trim(),
+        };
+
+        _context.Editoriales.Add(entity);
+        await _context.SaveChangesAsync();
+
+        // devolver DTO ya con el ID generado
+        return new EditorialDto
+        {
+            IdEditorial = entity.IdEditorial,
+            Nombre = entity.Nombre,
+            Pais = entity.Pais,
+            Ciudad = entity.Ciudad
+        };
+    }
+
+    public async Task<bool> UpdateEditorialAsync(int id, EditorialDto dto)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Nombre))
+            throw new Exception("El nombre de la editorial es obligatorio.");
+
+        var entity = await _context.Editoriales.FirstOrDefaultAsync(e => e.IdEditorial == id);
+        if (entity == null) return false;
+
+        entity.Nombre = dto.Nombre.Trim();
+        entity.Pais = string.IsNullOrWhiteSpace(dto.Pais) ? null : dto.Pais.Trim();
+        entity.Ciudad = string.IsNullOrWhiteSpace(dto.Ciudad) ? null : dto.Ciudad.Trim();
+
+        await _context.SaveChangesAsync();
+        return true;
     }
 }

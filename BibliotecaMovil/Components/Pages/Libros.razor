@@ -4,7 +4,7 @@
 @using Microsoft.AspNetCore.Authorization
 @inject ILibroService LibroService
 @inject IFavoritoService FavoritoService
-@attribute [Authorize(Roles = "Lector")]
+@attribute [Authorize(Roles = "Lector, Admin")]
 @inject BibliotecaMovil.Services.UsuarioSesionService Sesion
 
 

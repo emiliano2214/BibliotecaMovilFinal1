@@ -1,12 +1,19 @@
 ﻿@page "/editoriales"
 @using BibliotecaMovil.Shared.DTOs
 @using BibliotecaMovil.Shared.Interfaces
-@inject IEditorialService EditorialService
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize(Roles = "Admin")]
+@inject IEditorialService EditorialService
+
 <div style="background:#777FF5; min-height:100vh; display:flex; flex-direction:column;">
-    <div style="padding:40px 20px 10px 20px; display:grid; grid-template-columns:1fr auto; align-items:center;">
+    <div style="padding:40px 20px 10px 20px; display:grid; grid-template-columns:1fr auto auto; gap:10px; align-items:center;">
         <div style="font-size:26px; font-weight:bold;">Editorial</div>
+
+        <!-- Botón Agregar -->
+        <button @onclick="AbrirAgregar"
+                style="background:#00B894; color:white; border:none; padding:10px 12px; cursor:pointer; font-weight:bold;">
+            + Agregar
+        </button>
 
         <NavLink href="/menu" style="text-decoration:none; color:black; display:block;">
             <div style="background:#0050FF; padding:8px 6px; display:flex; flex-direction:column; gap:3px; cursor:pointer;">
@@ -19,11 +26,11 @@
 
     <div style="flex:1; background:white; overflow:auto;">
         <div style="padding:0 20px 20px 20px;">
-            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; font-weight:bold; padding:10px 0;">
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr 140px; font-weight:bold; padding:10px 0;">
                 <div>Nombre</div>
                 <div>País</div>
                 <div>Ciudad</div>
-
+                <div>Acciones</div>
             </div>
 
             @if (cargando)
@@ -32,10 +39,9 @@
             }
             else if (!string.IsNullOrWhiteSpace(error))
             {
-                <!-- Panel técnico de error -->
                 <div style="margin-top:15px; padding:15px; background:#2b0000; color:#ffb3b3; border-radius:6px;">
                     <div style="font-weight:bold; font-size:16px; margin-bottom:8px;">
-                        ❌ Error al cargar editoriales
+                        ❌ Error
                     </div>
 
                     <div style="white-space:pre-wrap; font-family:monospace; font-size:13px;">
@@ -56,34 +62,84 @@
             {
                 @foreach (var e in editoriales)
                 {
-                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; padding:6px 0; border-bottom:1px solid #EEE;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr 140px; padding:6px 0; border-bottom:1px solid #EEE; align-items:center;">
                         <div>@e.Nombre</div>
                         <div>@(string.IsNullOrWhiteSpace(e.Pais) ? "-" : e.Pais)</div>
                         <div>@(string.IsNullOrWhiteSpace(e.Ciudad) ? "-" : e.Ciudad)</div>
+
+                        <div>
+                            <button @onclick="() => AbrirEditar(e)"
+                                    style="background:#0984E3; color:white; border:none; padding:6px 10px; cursor:pointer;">
+                                Editar
+                            </button>
+                        </div>
                     </div>
                 }
             }
         </div>
 
-        <div style="background:#777FF5; padding:10px 20px; color:black; font-weight:bold;">
-            Formulario &lt;Accion&gt;
-        </div>
+        @if (mostrarFormulario)
+        {
+            <div style="background:#777FF5; padding:10px 20px; color:black; font-weight:bold;">
+                @TituloFormulario
+            </div>
 
-        <div style="padding:16px 20px 30px 20px;">
-            <div>Nombre</div>
-            <input style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:12px;" />
-            <div>País</div>
-            <input style="width:100%; height:34px; background:#DDDDDD; border:none;" />
-            <div>Ciudad</div>
-            <input style="width:100%; height:34px; background:#DDDDDD; border:none;" />
-        </div>
+            <div style="padding:16px 20px 30px 20px;">
+                <div>Nombre</div>
+                <input @bind="form.Nombre"
+                       style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:12px;" />
+
+                <div>País</div>
+                <input @bind="form.Pais"
+                       style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:12px;" />
+
+                <div>Ciudad</div>
+                <input @bind="form.Ciudad"
+                       style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:12px;" />
+
+                @if (!string.IsNullOrWhiteSpace(formError))
+                {
+                    <div style="margin-top:10px; padding:10px; background:#2b0000; color:#ffb3b3; border-radius:6px; white-space:pre-wrap; font-family:monospace; font-size:13px;">
+                        @formError
+                    </div>
+                }
+
+                <div style="display:flex; gap:10px; margin-top:14px;">
+                    <button @onclick="Guardar"
+                            disabled="@guardando"
+                            style="background:#00B894; color:white; border:none; padding:8px 14px; cursor:pointer; font-weight:bold;">
+                        @(guardando ? "Guardando..." : "Guardar")
+                    </button>
+
+                    <button @onclick="CerrarFormulario"
+                            disabled="@guardando"
+                            style="background:#B2BEC3; color:black; border:none; padding:8px 14px; cursor:pointer; font-weight:bold;">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+        }
     </div>
 </div>
 
 @code {
+
     private List<EditorialDto> editoriales = new();
     private bool cargando = true;
     private string? error;
+
+    // Form state
+    private bool mostrarFormulario = false;
+    private bool guardando = false;
+    private string? formError;
+
+    private enum FormMode { Add, Edit }
+    private FormMode modo = FormMode.Add;
+
+    // DTO del formulario (reutilizable)
+    private EditorialDto form = new();
+
+    private string TituloFormulario => modo == FormMode.Add ? "Formulario Agregar" : "Formulario Editar";
 
     protected override async Task OnInitializedAsync()
     {
@@ -101,12 +157,80 @@
         }
         catch (Exception ex)
         {
-            // 🔥 Mostramos mensaje + stacktrace
             error = $"{ex.Message}\n\nStackTrace:\n{ex.StackTrace}";
         }
         finally
         {
             cargando = false;
+        }
+    }
+
+    private void AbrirAgregar()
+    {
+        modo = FormMode.Add;
+        formError = null;
+        form = new EditorialDto(); // limpio
+        mostrarFormulario = true;
+    }
+
+    private void AbrirEditar(EditorialDto e)
+    {
+        modo = FormMode.Edit;
+        mostrarFormulario = true;
+        formError = null;
+
+        form = new EditorialDto
+        {
+            IdEditorial = e.IdEditorial,
+            Nombre = e.Nombre,
+            Pais = e.Pais,
+            Ciudad = e.Ciudad
+        };
+    }
+
+
+    private void CerrarFormulario()
+    {
+        if (guardando) return;
+        mostrarFormulario = false;
+        formError = null;
+    }
+
+    private async Task Guardar()
+    {
+        formError = null;
+
+        // Validación mínima
+        if (string.IsNullOrWhiteSpace(form.Nombre))
+        {
+            formError = "El nombre es obligatorio.";
+            return;
+        }
+
+        try
+        {
+            guardando = true;
+
+            if (modo == FormMode.Add)
+            {
+                await EditorialService.CreateEditorialAsync(form);
+            }
+            else
+            {
+                await EditorialService.UpdateEditorialAsync(form.IdEditorial, form);
+            }
+
+
+            mostrarFormulario = false;
+            await CargarDatos(); // refresca grilla
+        }
+        catch (Exception ex)
+        {
+            formError = $"{ex.Message}\n\nStackTrace:\n{ex.StackTrace}";
+        }
+        finally
+        {
+            guardando = false;
         }
     }
 }

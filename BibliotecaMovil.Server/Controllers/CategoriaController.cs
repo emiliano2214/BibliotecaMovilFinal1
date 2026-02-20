@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using BibliotecaMovil.Shared.DTOs;
-using BibliotecaMovil.Shared.Interfaces;
+using BibliotecaMovil.Server.Repositories;
 using Microsoft.AspNetCore.Authorization;
 
 namespace BibliotecaMovil.Server.Controllers;

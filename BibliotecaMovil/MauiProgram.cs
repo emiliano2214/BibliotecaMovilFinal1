@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
+using BibliotecaMovil.Services;
 
 namespace BibliotecaMovil
 {
@@ -17,8 +19,8 @@ namespace BibliotecaMovil
             builder.Services.AddMauiBlazorWebView();
 
 #if DEBUG
-    		builder.Services.AddBlazorWebViewDeveloperTools();
-    		builder.Logging.AddDebug();
+            builder.Services.AddBlazorWebViewDeveloperTools();
+            builder.Logging.AddDebug();
 #endif
 
             string serverUrl;
@@ -28,8 +30,22 @@ namespace BibliotecaMovil
             serverUrl = "http://localhost:7250";
 #endif
 
-            builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(serverUrl) });
+            // ✅ Sesión + handler
+            builder.Services.AddSingleton<UsuarioSesionService>();
+            builder.Services.AddTransient<JwtAuthorizationHeaderService>();
 
+            // ✅ HttpClientFactory + handler
+            builder.Services.AddHttpClient("Api", client =>
+            {
+                client.BaseAddress = new Uri(serverUrl);
+            })
+            .AddHttpMessageHandler<JwtAuthorizationHeaderService>();
+
+            // ✅ Este HttpClient es el que se inyecta en FavoritoService, LibroService, etc.
+            builder.Services.AddScoped(sp =>
+                sp.GetRequiredService<IHttpClientFactory>().CreateClient("Api"));
+
+            // Services
             builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IAutorService, BibliotecaMovil.Services.AutorService>();
             builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.ILibroService, BibliotecaMovil.Services.LibroService>();
             builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.ICategoriaService, BibliotecaMovil.Services.CategoriaService>();
@@ -43,8 +59,6 @@ namespace BibliotecaMovil
             builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.ISancionService, BibliotecaMovil.Services.SancionService>();
             builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IUsuarioAuthService, BibliotecaMovil.Services.UsuarioAuthService>();
             builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IUsuarioService, BibliotecaMovil.Services.UsuarioService>();
-            builder.Services.AddSingleton<BibliotecaMovil.Services.UsuarioSesionService>();
-
 
             return builder.Build();
         }

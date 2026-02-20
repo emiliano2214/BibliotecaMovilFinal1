@@ -13,7 +13,6 @@ namespace BibliotecaMovil.Server.Models
         public string Apellido { get; set; } = string.Empty;
         public string Nacionalidad { get; set; } = string.Empty;
 
-        public ICollection<Libro> Libros { get; set; } = new List<Libro>();
         public ICollection<LibroAutor> LibroAutores { get; set; } = new List<LibroAutor>();
     }
 }

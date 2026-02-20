@@ -8,6 +8,7 @@ public class BibliotecaDbContext : DbContext
     public BibliotecaDbContext(DbContextOptions<BibliotecaDbContext> options) : base(options) { }
 
     public DbSet<Libro> Libros => Set<Libro>();
+    public DbSet<LibroAutor> LibroAutor => Set<LibroAutor>();
     public DbSet<Autor> Autores => Set<Autor>();
     public DbSet<Editorial> Editoriales => Set<Editorial>();
     public DbSet<Categoria> Categorias => Set<Categoria>();
@@ -56,17 +57,20 @@ public class BibliotecaDbContext : DbContext
 
         // Libro -> Categoria
         modelBuilder.Entity<Libro>()
+            .Ignore(l => l.ImagenUrl)
             .HasOne(l => l.Categoria)
-            .WithMany() // o .WithMany(c => c.Libros) si existe
+            .WithMany(c => c.Libros)
             .HasForeignKey(l => l.IdCategoria)
             .OnDelete(DeleteBehavior.Restrict);
 
         // Libro -> Editorial
         modelBuilder.Entity<Libro>()
+            .Ignore(l => l.ImagenUrl)
             .HasOne(l => l.Editorial)
-            .WithMany() // o .WithMany(e => e.Libros) si existe
+            .WithMany(e => e.Libros)
             .HasForeignKey(l => l.IdEditorial)
             .OnDelete(DeleteBehavior.Restrict);
+
 
         // LibroAutor (tabla puente many-to-many)
         modelBuilder.Entity<LibroAutor>()

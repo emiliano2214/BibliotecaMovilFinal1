@@ -50,6 +50,7 @@ public class UsuarioAuthController : ControllerBase
             NombreRol = existing.NombreRol,
             Nombre = existing.Nombre,
             Apellido = existing.Apellido,
+            ImgUrl = existing.ImgUrl,   
             Activo = true
         };
 

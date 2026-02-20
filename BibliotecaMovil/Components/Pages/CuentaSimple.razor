@@ -11,10 +11,13 @@
     <!-- header (igual al tuyo) -->
     <div style="padding:40px 20px 10px 20px; display:grid; grid-template-columns:auto 1fr auto auto; column-gap:10px; align-items:flex-start;">
         <div style="width:80px; height:80px; background:white; display:flex; align-items:center; justify-content:center;">
-            <div style="width:64px; height:64px; background:gray; border-radius:32px; display:flex; align-items:center; justify-content:center;">
-                <span style="font-size:32px; color:white;">👤</span>
+            <div style="width:64px; height:64px; border-radius:32px; overflow:hidden; background:gray;">
+                <img src="@AvatarUrl"
+                     alt="Avatar"
+                     style="width:100%; height:100%; object-fit:cover;" />
             </div>
         </div>
+
 
         <div></div>
 
@@ -100,6 +103,13 @@
 @code {
     private UsuarioPublicoDto? Usuario;
     private UsuarioActualizadoDto? Edit;
+    private const string CloudinaryBase = "https://res.cloudinary.com/dbbqddxcd/image/upload/";
+    private const string DefaultAvatarPath = "v1771518924/Avatar_p2iu85.png";
+
+    private string AvatarUrl =>
+        string.IsNullOrWhiteSpace(Usuario?.ImgUrl)
+            ? CloudinaryBase + DefaultAvatarPath
+            : CloudinaryBase + Usuario!.ImgUrl;
 
     private bool Cargando = true;
     private bool Guardando = false;
