@@ -13,4 +13,5 @@ public interface IUsuarioRepository
     Task<bool> CreateUsuarioAsync(UsuarioCreadoInterno dto);
     Task<bool> UpdateAsync(UsuarioActualizadoDto dto);
     Task<bool> DeleteAsync(int id);
+    Task<UsuarioDetalleDto?> GetDetalleAsync(int idUsuario);
 }

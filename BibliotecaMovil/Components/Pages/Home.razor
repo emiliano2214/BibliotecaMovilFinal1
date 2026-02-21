@@ -1,8 +1,10 @@
 @page "/home"
 @using Microsoft.AspNetCore.Authorization
 @using BibliotecaMovil.Shared.DTOs
+@using BibliotecaMovil.Shared.Interfaces
 @using BibliotecaMovil.Services
 @inject UsuarioSesionService Sesion
+@inject IUsuarioService UsuarioService
 @inject NavigationManager Nav
 @attribute [Authorize]
 
@@ -26,7 +28,7 @@
         <div style="justify-self:end; display:flex; align-items:flex-start; gap:10px;">
             <!-- Avatar -->
             <div style="width:48px; height:48px; border-radius:24px; background:white; display:flex; align-items:center; justify-content:center; margin-right:10px; overflow:hidden;">
-                <img src=@AvatarUrl
+                <img src="@AvatarUrl"
                      alt="Avatar"
                      style="width:48px; height:48px; object-fit:cover;" />
             </div>
@@ -53,63 +55,144 @@
     <div style="background:white; flex:1; overflow:auto;">
         <div style="padding:20px; display:flex; flex-direction:column; gap:24px;">
 
-            <!-- Stats -->
-            <div>
-                <div style="font-size:18px; font-weight:bold; margin-bottom:12px;">Tus estadisticas</div>
+            @if (Cargando)
+            {
+                <div>Cargando...</div>
+            }
+            else if (!string.IsNullOrWhiteSpace(Error))
+            {
+                <div style="color:red;">@Error</div>
+            }
+            else
+            {
+                <!-- Stats -->
+                <div>
+                    <div style="font-size:18px; font-weight:bold; margin-bottom:12px;">Tus estadisticas</div>
 
-                <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
-                    <span style="font-size:24px;">📚</span>
-                    <span>Libros Activos:</span>
+                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+                        <span style="font-size:24px;">📚</span>
+                        <span>Libros Activos: <strong>@(detalle?.CantPrestamos ?? 0)</strong></span>
+                    </div>
+
+                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+                        <span style="font-size:24px;">📅</span>
+                        <span>Por devolver: <strong>@(PorDevolver ?? 0)</strong></span>
+                    </div>
+
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span style="font-size:24px;">💬</span>
+                        <span>Reseñas hechas: <strong>@(detalle?.CantResenas ?? 0)</strong></span>
+                    </div>
                 </div>
 
-                <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
-                    <span style="font-size:24px;">📅</span>
-                    <span>Por devolver</span>
+                <!-- Atajos -->
+                <div style="display:grid; grid-template-columns:1fr 1fr; grid-row-gap:20px; grid-column-gap:20px;">
+                    <button @onclick="IrLibros"
+                            style="height:90px; background:#0050FF; color:black; border:none; font-size:16px;">
+                        Libros
+                    </button>
+
+                    <button @onclick="IrPrestamos"
+                            style="height:90px; background:#0050FF; color:black; border:none; font-size:16px;">
+                        Prestamos
+                    </button>
+
+                    <button @onclick="IrResenas"
+                            style="height:90px; background:#0050FF; color:black; border:none; font-size:16px;">
+                        Reseñas
+                    </button>
+
+                    <button @onclick="IrFavoritos"
+                            style="height:90px; background:#0050FF; color:black; border:none; font-size:16px;">
+                        Favoritos
+                    </button>
+
+                    <button @onclick="IrSanciones"
+                            style="height:90px; background:#0050FF; color:black; border:none; font-size:16px;">
+                        Sanciones
+                    </button>
                 </div>
+                @if (!string.IsNullOrWhiteSpace(mensaje))
+                {
+                    <div style="background:#e6f0ff; border-radius:14px; padding:12px; margin-bottom:12px;">
+                        @mensaje
+                    </div>
+                }
+                <div style="font-size:18px; font-weight:bold;">Novedades</div>
 
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <span style="font-size:24px;">💬</span>
-                    <span>Reseñas Hechas</span>
-                </div>
-            </div>
-
-            <!-- Atajos -->
-            <div style="display:grid; grid-template-columns:1fr 1fr; grid-row-gap:20px; grid-column-gap:20px;">
-                <button style="height:90px; background:#0050FF; color:black; border:none; font-size:16px;">Libros</button>
-                <button style="height:90px; background:#0050FF; color:black; border:none; font-size:16px;">Prestamos</button>
-                <button style="height:90px; background:#0050FF; color:black; border:none; font-size:16px;">Reseñas</button>
-                <button style="height:90px; background:#0050FF; color:black; border:none; font-size:16px;">Favoritos</button>
-            </div>
-
-            <div style="font-size:18px; font-weight:bold;">Novedades</div>
+                @if (!sanciones.Any(s => s.EstaActiva))
+                {
+                    <div style="background:#fff3cd; border-radius:12px; padding:12px;">
+                        ⚠️ Tenés @cantidadSancionesActivas sanción(es) activa(s)
+                        por un total de <b>$ @TotalDeudaActiva.ToString("N0")</b>
+                    </div>
+                }
+            }
         </div>
     </div>
 </div>
 
 @code {
-
-
-
     private UsuarioPublicoDto? usuario;
+    private UsuarioDetalleDto? detalle;
+    private bool Cargando = true;
+    private string Error = "";
+    private string? mensaje;
+    private List<SancionDto> sanciones = new();
+    private int cantidadSancionesActivas => sanciones.Count(s => s.EstaActiva);
+    private void Pagar(SancionDto s)
+    {
+        // Por ahora solo UI. Después lo conectamos a un endpoint real.
+        mensaje = $"Simulación: pagar sanción #{s.IdSancion} por $ {(s.Monto ?? 0m).ToString("N0")}";
+    }
+
+    private decimal TotalDeudaActiva =>
+    sanciones
+        .Where(s => s.EstaActiva)
+        .Sum(s => s.Monto ?? 0m);
+
     // Direccion repetitiva en todo link Claudinary
     private const string CloudinaryBase = "https://res.cloudinary.com/dbbqddxcd/image/upload/";
     // Imagen de usuario si éste no posee imagen
     private const string DefaultAvatarPath = "v1771518924/Avatar_p2iu85.png";
-    // Ajustá esto según tu DTO (ImgUrl / ImgURL / ImagenUrl)
+
     private string AvatarUrl =>
         string.IsNullOrWhiteSpace(usuario?.ImgUrl)
             ? CloudinaryBase + DefaultAvatarPath
             : CloudinaryBase + usuario!.ImgUrl;
 
+    // Si todavía no tenés este cálculo, lo dejamos como "igual a activos" para que no quede vacío.
+    // Ideal: agregar a UsuarioDetalleDto o hacer endpoint específico (por devolver = préstamos con FechaDevolucion null, por ejemplo).
+    private int? PorDevolver => detalle?.CantPrestamos;
+
     protected override async Task OnInitializedAsync()
     {
-        usuario = await Sesion.ObtenerUsuarioAsync();
-
-        // Si entran a /home sin login, lo mandás al login
-        if (usuario is null)
+        try
         {
-            Nav.NavigateTo("/");
-            return;
+            usuario = await Sesion.ObtenerUsuarioAsync();
+
+            // Si entran a /home sin login, lo mandás al login
+            if (usuario is null)
+            {
+                Nav.NavigateTo("/");
+                return;
+            }
+
+            // ✅ Traer estadísticas desde el endpoint detalle
+            detalle = await UsuarioService.GetDetalleAsync(usuario.IdUsuario);
+        }
+        catch (Exception ex)
+        {
+            Error = "Error: " + ex.Message;
+        }
+        finally
+        {
+            Cargando = false;
         }
     }
+    void IrLibros() => Nav.NavigateTo("/libros");
+    void IrPrestamos() => Nav.NavigateTo("/prestamos");
+    void IrResenas() => Nav.NavigateTo("/resenas");
+    void IrFavoritos() => Nav.NavigateTo("/favoritos");
+    void IrSanciones() => Nav.NavigateTo("/sanciones");
 }

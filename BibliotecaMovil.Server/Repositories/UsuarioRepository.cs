@@ -15,6 +15,37 @@ public class UsuarioRepository : IUsuarioRepository
         _context = context;
     }
 
+    public async Task<UsuarioDetalleDto?> GetDetalleAsync(int idUsuario)
+    {
+        return await _context.Usuarios
+            .AsNoTracking()
+            .Where(u => u.IdUsuario == idUsuario)
+            .Select(u => new UsuarioDetalleDto
+            {
+                IdUsuario = u.IdUsuario,
+                Nombre = u.Nombre,
+                Apellido = u.Apellido,
+                Email = u.Email,
+                FechaAlta = u.FechaAlta,
+                Activo = u.Activo,
+
+                IdRol = u.IdRol,
+                NombreRol = _context.Roles
+                    .Where(r => r.IdRol == u.IdRol)
+                    .Select(r => r.Nombre)
+                    .FirstOrDefault() ?? "",
+
+                ImgUrl = u.ImgUrl,
+
+                CantPrestamos = u.Prestamos.Count,
+                CantResenas = u.Resenas.Count,
+                CantFavoritos = u.Favoritos.Count,
+                CantReservas = u.Reservas.Count,
+                CantSanciones = u.Sanciones.Count
+            })
+            .FirstOrDefaultAsync();
+    }
+
     // ✅ GET ALL
     public async Task<List<UsuarioPublicoDto>> GetAllAsync()
     {

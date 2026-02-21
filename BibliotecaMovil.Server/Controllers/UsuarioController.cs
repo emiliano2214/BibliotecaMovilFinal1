@@ -19,6 +19,22 @@ public class UsuarioController : ControllerBase
         _repo = repo;
     }
 
+    // GET api/Usuario/5/detalle
+    [HttpGet("{id:int}/detalle")]
+    public async Task<ActionResult<UsuarioDetalleDto>> GetDetalle(int id)
+    {
+        try
+        {
+            var dto = await _repo.GetDetalleAsync(id);
+            if (dto is null) return NotFound();
+            return Ok(dto);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, ex.ToString()); // stacktrace
+        }
+    }
+
     // GET api/Usuario
     [Authorize(Roles = "Admin,Bibliotecario")]
     [HttpGet]

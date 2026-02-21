@@ -16,6 +16,19 @@ namespace BibliotecaMovil.Services
         {
             _http = http;
         }
+        public async Task<UsuarioDetalleDto?> GetDetalleAsync(int idUsuario)
+        {
+            var resp = await _http.GetAsync($"api/Usuario/{idUsuario}/detalle");
+
+            if (!resp.IsSuccessStatusCode)
+            {
+                var body = await resp.Content.ReadAsStringAsync();
+                throw new Exception($"HTTP {(int)resp.StatusCode} {resp.ReasonPhrase}\n{body}");
+            }
+
+            return await resp.Content.ReadFromJsonAsync<UsuarioDetalleDto>();
+        }
+
         public async Task<List<UsuarioPublicoDto>> GetAllAsync()
             => await _http.GetFromJsonAsync<List<UsuarioPublicoDto>>("api/Usuario") ?? new();
 

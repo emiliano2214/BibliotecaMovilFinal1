@@ -6,10 +6,11 @@
 @using Microsoft.AspNetCore.Authorization
 @inject IUsuarioService UsuarioService
 @inject BibliotecaMovil.Services.UsuarioSesionService Sesion
+@inject NavigationManager Nav
 
 <div style="background:#777FF5; min-height:100vh; display:flex; flex-direction:column;">
     <!-- header (igual al tuyo) -->
-    <div style="padding:40px 20px 10px 20px; display:grid; grid-template-columns:auto 1fr auto auto; column-gap:10px; align-items:flex-start;">
+    <div style="padding:40px 20px 10px 20px;display:grid;grid-template-columns:auto 1fr auto auto;column-gap:10px;align-items:flex-start;">
         <div style="width:80px; height:80px; background:white; display:flex; align-items:center; justify-content:center;">
             <div style="width:64px; height:64px; border-radius:32px; overflow:hidden; background:gray;">
                 <img src="@AvatarUrl"
@@ -18,18 +19,18 @@
             </div>
         </div>
 
-
-        <div></div>
-
+        <h1>Cuenta usuario</h1>
         <div style="background:#0050FF; width:40px; height:40px; display:flex; align-items:center; justify-content:center;">
             <span style="font-size:20px; font-weight:bold;">i</span>
         </div>
 
         <NavLink href="/menu" style="text-decoration:none; color:black; display:block;">
-            <div style="background:#0050FF; padding:8px 6px; display:flex; flex-direction:column; gap:3px; cursor:pointer;">
-                <div style="height:2px; width:20px; background:black;"></div>
-                <div style="height:2px; width:20px; background:black;"></div>
-                <div style="height:2px; width:20px; background:black;"></div>
+            <div style="background:#0050FF; width:40px; height:40px; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+                <div style="display:flex; flex-direction:column; gap:3px;">
+                    <div style="height:2px; width:20px; background:black;"></div>
+                    <div style="height:2px; width:20px; background:black;"></div>
+                    <div style="height:2px; width:20px; background:black;"></div>
+                </div>
             </div>
         </NavLink>
     </div>
@@ -83,10 +84,15 @@
                         @(Guardando ? "Guardando..." : "Guardar cambios")
                     </button>
 
+                    <button type="button" @onclick="IrFormulario"
+                            style="background:#DDDDDD; color:black; border:none; padding:10px 14px; cursor:pointer;">
+                        Detalles completos
+                    </button>
                     <button type="button" @onclick="Resetear" disabled="@Guardando"
                             style="background:#DDDDDD; color:black; border:none; padding:10px 14px; cursor:pointer;">
                         Cancelar
                     </button>
+
                 </div>
             </EditForm>
 
@@ -148,6 +154,12 @@
 
         Mensaje = "";
         Ok = false;
+    }
+
+    private void IrFormulario()
+    {
+        // En este ejemplo ya estamos en el formulario, pero si tuvieras una vista de "perfil" y un botón "Editar perfil",
+        Nav.NavigateTo("/usuario-form");
     }
 
     private async Task Guardar()

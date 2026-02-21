@@ -154,5 +154,34 @@ public class BibliotecaDbContext : DbContext
                   .HasForeignKey(r => r.IdLibro)
                   .OnDelete(DeleteBehavior.Restrict);
         });
+        // ✅ Reserva -> Usuario / Ejemplar (o Libro, según tu modelo)
+        modelBuilder.Entity<Reserva>(entity =>
+        {
+            entity.HasOne(r => r.Usuario)
+                  .WithMany(u => u.Reservas)
+                  .HasForeignKey(r => r.IdUsuario)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(r => r.Libro)
+                  .WithMany(l => l.Reservas)
+                  .HasForeignKey(r => r.IdLibro)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
+
+
+        // ✅ Sancion -> Usuario (y posiblemente Prestamo)
+        modelBuilder.Entity<Sancion>(entity =>
+        {
+            entity.HasOne(s => s.Usuario)
+                  .WithMany(u => u.Sanciones)
+                  .HasForeignKey(s => s.IdUsuario)
+                  .OnDelete(DeleteBehavior.Restrict);
+
+            // Si Sancion tiene IdPrestamo + navigation Prestamo:
+            entity.HasOne(s => s.Prestamo)
+                  .WithMany(p => p.Sanciones)
+                  .HasForeignKey(s => s.IdPrestamo)
+                  .OnDelete(DeleteBehavior.Restrict);
+        });
     }
 }

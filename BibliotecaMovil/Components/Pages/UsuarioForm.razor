@@ -1,33 +1,137 @@
 @page "/usuario-form"
+@using BibliotecaMovil.Services
+@using BibliotecaMovil.Shared.DTOs
+@inject BibliotecaMovil.Services.UsuarioSesionService Sesion
+@using BibliotecaMovil.Shared.Interfaces
+@inject IUsuarioService UService
+@inject NavigationManager Nav
+
 
 <div style="background:#777FF5; min-height:100vh; display:flex; flex-direction:column;">
-    <div style="padding:40px 20px 10px 20px; display:grid; grid-template-columns:auto 1fr auto; column-gap:10px; align-items:center;">
+    <div style="padding:40px 20px 10px 20px; display:grid; grid-template-columns:auto 1fr auto auto; column-gap:10px; align-items:center;">
         <div style="width:80px; height:80px; background:white; display:flex; align-items:center; justify-content:center;">
-            <div style="width:64px; height:64px; background:gray; border-radius:32px;"></div>
+            <div style="width:64px; height:64px; border-radius:32px; overflow:hidden; background:gray;">
+                <img src="@AvatarUrl"
+                     alt="Avatar"
+                     style="width:100%; height:100%; object-fit:cover;" />
+            </div>
         </div>
-        <div></div>
-        <div style="background:#0050FF; width:40px; height:40px; display:flex; align-items:center; justify-content:center;">
-            <span style="font-size:22px;">👤</span>
-        </div>
+        <h1>Detalles de Usuario</h1>
+        <NavLink href="/cuenta" style="text-decoration:none; color:black; display:block;">
+            <div style="width:40px; height:40px; background:#0050FF; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+                <span style="font-size:20px;">👤</span>
+            </div>
+        </NavLink>
+                        
+        <NavLink href="/menu" style="text-decoration:none; color:black; display:block;">
+            <div style="width:40px;height:40px;background:#0050FF;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;">
+                <div style="height:2px; width:20px; background:black;"></div>
+                <div style="height:2px; width:20px; background:black;"></div>
+                <div style="height:2px; width:20px; background:black;"></div>
+            </div>
+        </NavLink>
     </div>
     <div style="flex:1; background:white; padding:20px;">
-        <div>Nombre completo</div>
-        <input style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:10px;" />
-        <div>Email</div>
-        <input style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:10px;" />
-        <div>Fecha de alta</div>
-        <input style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:10px;" />
-        <div>Rol</div>
-        <input style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:10px;" />
-        <div>Reseñas</div>
-        <input style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:10px;" />
-        <div>Prestamos</div>
-        <input style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:10px;" />
-        <div>Favoritos</div>
-        <input style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:20px;" />
-        <div style="display:grid; grid-template-columns:1fr 1fr; grid-column-gap:20px; margin-top:10px;">
-            <button style="height:44px; background:#0050FF; border:none; color:black;">Aceptar</button>
-            <button style="height:44px; background:red; border:none; color:black;">Cancelar</button>
-        </div>
+        @if (Cargando)
+        {
+            <div>Cargando...</div>
+        }
+        else if (!string.IsNullOrWhiteSpace(Error))
+        {
+            <div style="color:red;">@Error</div>
+        }
+        else if (Detalle is null)
+        {
+            <div style="color:red;">No se pudo cargar el detalle del usuario.</div>
+        }
+        else
+        {
+            <div>Nombre completo</div>
+            <input value="@Detalle.NombreCompleto" readonly
+                   style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:10px;" />
+
+            <div>Email</div>
+            <input value="@Detalle.Email" readonly
+                   style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:10px;" />
+
+            <div>Fecha de alta</div>
+            <input value="@Detalle.FechaAlta.ToString("dd/MM/yyyy")" readonly
+                   style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:10px;" />
+
+            <div>Rol</div>
+            <input value="@Detalle.NombreRol" readonly
+                   style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:10px;" />
+
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; column-gap:20px; margin-bottom:20px;">
+                <div>
+                    <div>Reseñas</div>
+                    <input value="@Detalle.CantResenas" readonly
+                           style="width:100%; height:34px; background:#DDDDDD; border:none;" />
+                </div>
+
+                <div>
+                    <div>Prestamos</div>
+                    <input value="@Detalle.CantPrestamos" readonly
+                           style="width:100%; height:34px; background:#DDDDDD; border:none;" />
+                </div>
+
+                <div>
+                    <div>Favoritos</div>
+                    <input value="@Detalle.CantFavoritos" readonly
+                           style="width:100%; height:34px; background:#DDDDDD; border:none;" />
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; grid-column-gap:20px; margin-top:10px;">
+                <button @onclick="VolverCuenta" style="height:44px; background:#0050FF; border:none; color:black;">
+                    Aceptar
+                </button>
+                <button @onclick="VolverCuenta" style="height:44px; background:red; border:none; color:black;">
+                    Cancelar
+                </button>
+            </div>
+        }
     </div>
 </div>
+@code {
+    private UsuarioDetalleDto? Detalle;
+    private bool Cargando = true;
+    private string Error = "";
+
+    private const string CloudinaryBase = "https://res.cloudinary.com/dbbqddxcd/image/upload/";
+    private const string DefaultAvatarPath = "v1771518924/Avatar_p2iu85.png";
+
+    private string AvatarUrl =>
+        string.IsNullOrWhiteSpace(Detalle?.ImgUrl)
+            ? CloudinaryBase + DefaultAvatarPath
+            : CloudinaryBase + Detalle!.ImgUrl;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var usuarioSesion = await Sesion.ObtenerUsuarioAsync();
+            if (usuarioSesion is null)
+            {
+                Error = "No hay sesión iniciada.";
+                return;
+            }
+
+            // ✅ Trae “detalle completo” desde API
+            Detalle = await UService.GetDetalleAsync(usuarioSesion.IdUsuario);
+
+            if (Detalle is null)
+                Error = "No se pudo obtener el detalle (GET api/Usuario/{id}/detalle).";
+        }
+        catch (Exception ex)
+        {
+            Error = "Error: " + ex.Message;
+        }
+        finally
+        {
+            Cargando = false;
+        }
+    }
+
+    private void VolverCuenta() => Nav.NavigateTo("/cuenta");
+}

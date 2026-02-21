@@ -1,0 +1,133 @@
+﻿@page "/sanciones"
+@using BibliotecaMovil.Shared.DTOs
+@using BibliotecaMovil.Shared.Interfaces
+@inject ISancionService SancionService
+@inject NavigationManager Nav
+
+<div style="background:#777FF5; min-height:100vh; padding:30px 18px;">
+
+    <!-- Header -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
+        <div style="font-size:26px; font-weight:bold;">Mis sanciones</div>
+
+        <button @onclick="Volver"
+                style="background:#0050FF; border:none; padding:10px 14px; border-radius:10px; font-weight:bold; cursor:pointer;">
+            Volver
+        </button>
+    </div>
+
+    @if (cargando)
+    {
+        <div style="background:white; border-radius:14px; padding:14px;">
+            Cargando sanciones...
+        </div>
+    }
+    else if (!string.IsNullOrWhiteSpace(error))
+    {
+        <div style="background:#ffd6d6; border-radius:14px; padding:14px; color:#7a0000;">
+            <b>Error:</b> @error
+        </div>
+    }
+    else if (sanciones.Count == 0)
+    {
+        <div style="background:white; border-radius:14px; padding:14px;">
+            No tenés sanciones ✅
+        </div>
+    }
+    else
+    {
+        <!-- Resumen -->
+        <div style="background:white; border-radius:14px; padding:14px; margin-bottom:14px;">
+            <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                <div style="flex:1; min-width:180px;">
+                    <div style="font-size:14px; opacity:.8;">Total sanciones</div>
+                    <div style="font-size:20px; font-weight:bold;">@sanciones.Count</div>
+                </div>
+
+                <div style="flex:1; min-width:180px;">
+                    <div style="font-size:14px; opacity:.8;">Activas</div>
+                    <div style="font-size:20px; font-weight:bold;">
+                        @sanciones.Count(s => s.EstaActiva)
+                    </div>
+                </div>
+
+                <div style="flex:1; min-width:180px;">
+                    <div style="font-size:14px; opacity:.8;">Monto total</div>
+                    <div style="font-size:20px; font-weight:bold;">
+                        $ @(sanciones.Sum(s => s.Monto ?? 0m).ToString("N0"))
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla -->
+        <div style="background:white; border-radius:14px; padding:14px;">
+            <div style="display:grid; grid-template-columns:110px 110px 1fr 140px 120px 120px; gap:10px; font-weight:bold; padding:8px 6px; border-bottom:1px solid #ddd;">
+                <div>Fecha</div>
+                <div>Préstamo</div>
+                <div>Motivo</div>
+                <div>Monto</div>
+                <div>Estado</div>
+                <div>Detalle</div>
+            </div>
+
+            @foreach (var s in sanciones.OrderByDescending(x => x.FechaInicio))
+            {
+                <div style="display:grid; grid-template-columns:110px 110px 1fr 140px 120px 120px; gap:10px; padding:10px 6px; border-bottom:1px solid #eee; align-items:center;">
+                    <div>@s.FechaInicio.ToString("dd/MM/yyyy")</div>
+
+                    <div>#@s.IdPrestamo</div>
+
+                    <div style="word-break:break-word;">@s.Motivo</div>
+
+                    <div>$ @((s.Monto ?? 0m).ToString("N0"))</div>
+
+                    @if (s.EstaActiva)
+                    {
+                        <div style="font-weight:bold; color:#b10000;">Activa</div>
+                    }
+                    else
+                    {
+                        <div style="font-weight:bold; color:#0a6b00;">Pagada</div>
+                    }
+
+                    <button @onclick="() => IrADetalle(s.IdPrestamo)"
+                            style="background:#0050FF; border:none; padding:8px 10px; border-radius:10px; cursor:pointer; font-weight:bold;">
+                        Ver
+                    </button>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private bool cargando = true;
+    private string? error;
+    private List<SancionDto> sanciones = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            cargando = true;
+            error = null;
+
+            sanciones = await SancionService.GetMisSancionesAsync();
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private void IrADetalle(int prestamoId)
+        => Nav.NavigateTo($"/sanciones/{prestamoId}");
+
+    private void Volver()
+        => Nav.NavigateTo("/home"); // o /menu según tu app
+}

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace BibliotecaMovil.Server.Models
 {
@@ -21,6 +22,7 @@ namespace BibliotecaMovil.Server.Models
         public string Estado { get; set; } = string.Empty;
 
         // Navigations (1 prestamo -> 1 usuario, 1 ejemplar)
+        [ForeignKey(nameof(IdUsuario))]
         public Usuario? Usuario { get; set; }
         public Ejemplar? Ejemplar { get; set; }
 

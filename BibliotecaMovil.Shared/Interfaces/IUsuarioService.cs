@@ -14,6 +14,7 @@ namespace BibliotecaMovil.Shared.Interfaces
         Task<bool> CreateAsync(UsuarioCreadoDto usuario);
         Task<bool> UpdateAsync(UsuarioActualizadoDto usuario);
         public Task<bool> DeleteAsync(int id);
+        Task<UsuarioDetalleDto?> GetDetalleAsync(int idUsuario);
 
     }
 }
