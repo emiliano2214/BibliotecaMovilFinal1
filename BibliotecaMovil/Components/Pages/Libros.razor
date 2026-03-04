@@ -4,38 +4,44 @@
 @using Microsoft.AspNetCore.Authorization
 @inject ILibroService LibroService
 @inject IFavoritoService FavoritoService
-@attribute [Authorize(Roles = "Lector, Admin")]
+@inject NavigationManager Nav
+@attribute [Authorize(Roles = "Lector,Admin,Bibliotecario")]
 @inject BibliotecaMovil.Services.UsuarioSesionService Sesion
 
-
 <div style="background:#777FF5; min-height:100vh; display:flex; flex-direction:column;">
-    <!-- Header -->
-    <!-- Header -->
-    <div style="padding:60px 20px 20px 20px; display:flex; flex-direction:column; gap:30px;">
 
-        <!-- Título -->
+    <div style="padding:60px 20px 20px 20px; display:flex; flex-direction:column; gap:30px;">
         <div style="font-size:28px; font-weight:bold;">
             Libros
         </div>
 
-        <!-- Línea inferior (cuadrado izquierda + hamburguesa derecha) -->
-        <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
 
-            <!-- Cuadrado izquierdo -->
-            <div style="width:40px; height:40px; background:#0050FF;"></div>
+            <!-- Izquierda -->
+            <div style="display:flex; gap:10px; align-items:center;">
+                <div style="width:40px; height:40px; background:#0050FF;"></div>
 
-            <!-- Botón hamburguesa derecho -->
+                @* ✅ Solo Admin/Bibliotecario ven Nuevo *@
+                @if (usuario is not null && (usuario.NombreRol == "Admin" || usuario.NombreRol == "Bibliotecario"))
+                {
+                    <button style="height:40px; padding:0 12px; background:#0050FF; border:none; cursor:pointer;"
+                            @onclick="IrNuevo">
+                        ➕ Nuevo
+                    </button>
+                }
+            </div>
+
+            <!-- Derecha -->
             <NavLink href="/menu" style="text-decoration:none;">
                 <div style="
-                width:40px; height:40px;
-                background:#0050FF;
-                display:flex;
-                flex-direction:column;
-                align-items:center;
-                justify-content:center;
-                gap:4px;
-                cursor:pointer;
-            ">
+                    width:40px; height:40px;
+                    background:#0050FF;
+                    display:flex;
+                    flex-direction:column;
+                    align-items:center;
+                    justify-content:center;
+                    gap:4px;
+                    cursor:pointer;">
                     <div style="height:2px; width:18px; background:black;"></div>
                     <div style="height:2px; width:18px; background:black;"></div>
                     <div style="height:2px; width:18px; background:black;"></div>
@@ -43,12 +49,11 @@
             </NavLink>
 
         </div>
-
     </div>
 
-    <!-- Lista -->
     <div style="flex:1; background:white;">
         <div style="padding:10px 20px; font-weight:bold;">Lista de Libros</div>
+
         @if (!string.IsNullOrWhiteSpace(mensaje))
         {
             <div style="padding:10px 20px; color:green; font-weight:bold;">@mensaje</div>
@@ -74,8 +79,17 @@
         {
             @foreach (var libro in libros)
             {
-                <div style="display:grid; grid-template-columns:1fr auto; align-items:center; margin:10px 0; padding:10px 20px; border-bottom:2px solid #777FF5;">
+                <div style="display:grid; grid-template-columns:1fr auto auto; align-items:center; margin:10px 0; padding:10px 20px; border-bottom:2px solid #777FF5; column-gap:12px;">
                     <div>@libro.Titulo</div>
+
+                    @* ✅ Editar solo Admin/Bibliotecario *@
+                    @if (usuario is not null && (usuario.NombreRol == "Admin" || usuario.NombreRol == "Bibliotecario"))
+                    {
+                        <button style="height:34px; padding:0 10px; background:#DDDDDD; border:none; cursor:pointer;"
+                                @onclick="() => IrEditar(libro.IdLibro)">
+                            ✏️ Editar
+                        </button>
+                    }
 
                     <div style="font-size:24px; cursor:pointer;" @onclick="() => ToggleFavorito(libro)">
                         <span style="color:@(EsFavorito(libro) ? "gold" : "gray");">
@@ -94,6 +108,7 @@
 
     private bool cargando = true;
     private string? error;
+    private string? mensaje;
 
     private int usuarioId;
     private UsuarioPublicoDto? usuario;
@@ -112,7 +127,6 @@
         cargando = true;
         error = null;
 
-        // 1) Libros
         try
         {
             libros = await LibroService.GetLibrosAsync() ?? new();
@@ -124,7 +138,6 @@
             return;
         }
 
-        // 2) Favoritos
         try
         {
             var favoritos = await FavoritoService.GetFavoritosByUsuarioAsync(usuarioId) ?? new();
@@ -140,9 +153,11 @@
         cargando = false;
     }
 
+    private void IrNuevo() => Nav.NavigateTo("/libro-form");
+
+    private void IrEditar(int idLibro) => Nav.NavigateTo($"/libro-form/{idLibro}");
 
     private bool EsFavorito(LibroDto libro) => favLibroIds.Contains(libro.IdLibro);
-    private string? mensaje;
 
     private async Task ToggleFavorito(LibroDto libro)
     {
@@ -161,10 +176,7 @@
                     favLibroIds.Remove(libroId);
                     mensaje = "❌ Favorito eliminado";
                 }
-                else
-                {
-                    error = "No se pudo eliminar (no existía o falló).";
-                }
+                else error = "No se pudo eliminar (no existía o falló).";
             }
             else
             {
@@ -180,10 +192,7 @@
                     favLibroIds.Add(libroId);
                     mensaje = "✅ Favorito agregado";
                 }
-                else
-                {
-                    error = "No se pudo agregar (ya existía o falló).";
-                }
+                else error = "No se pudo agregar (ya existía o falló).";
             }
         }
         catch (Exception ex)
@@ -191,5 +200,4 @@
             error = ex.Message;
         }
     }
-
 }

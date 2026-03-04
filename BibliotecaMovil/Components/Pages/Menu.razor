@@ -1,5 +1,7 @@
 @page "/menu"
+@using BibliotecaMovil.Shared.DTOs
 @inject NavigationManager Nav
+@inject BibliotecaMovil.Services.UsuarioSesionService Sesion
 
 <div style="background-color:#777FF5; min-height:100vh; display:flex; justify-content:center; align-items:flex-start; padding-top:80px;">
 
@@ -7,60 +9,63 @@
 
         <NavLink href="/cuenta" style="@LinkStyle">
             <div style="@CardStyle">
-                <img src=https://res.cloudinary.com/dbbqddxcd/image/upload/v1771517191/usuario_jb2qbo.png alt="Usuario" style="@IconStyle" />
+                <img src="https://res.cloudinary.com/dbbqddxcd/image/upload/v1771517191/usuario_jb2qbo.png" alt="Usuario" style="@IconStyle" />
                 <div style="@TextStyle">Usuario</div>
             </div>
         </NavLink>
 
         <NavLink href="/libros" style="@LinkStyle">
             <div style="@CardStyle">
-                <img src=https://res.cloudinary.com/dbbqddxcd/image/upload/v1771517193/Libro_kikxig.png alt="Libros" style="@IconStyle" />
+                <img src="https://res.cloudinary.com/dbbqddxcd/image/upload/v1771517193/Libro_kikxig.png" alt="Libros" style="@IconStyle" />
                 <div style="@TextStyle">Libros</div>
             </div>
         </NavLink>
 
         <NavLink href="/prestamos" style="@LinkStyle">
             <div style="@CardStyle">
-                <img src=https://res.cloudinary.com/dbbqddxcd/image/upload/v1771517191/Ejemplares_aoiltg.png alt="Prestamos" style="@IconStyle" />
+                <img src="https://res.cloudinary.com/dbbqddxcd/image/upload/v1771517191/Ejemplares_aoiltg.png" alt="Prestamos" style="@IconStyle" />
                 <div style="@TextStyle">Préstamos</div>
             </div>
         </NavLink>
 
-        <AuthorizeView Roles="Admin,Bibliotecario">
+        @* ✅ SOLO Admin/Bibliotecario *@
+        @if (esAdminOBiblio)
+        {
             <NavLink href="/busqueda" style="@LinkStyle">
                 <div style="@CardStyle">
-                    <img src=https://res.cloudinary.com/dbbqddxcd/image/upload/v1771517191/Buscar_horcyw.png alt="Busqueda" style="@IconStyle" />
+                    <img src="https://res.cloudinary.com/dbbqddxcd/image/upload/v1771517191/Buscar_horcyw.png" alt="Busqueda" style="@IconStyle" />
                     <div style="@TextStyle">Búsqueda</div>
                 </div>
             </NavLink>
-        </AuthorizeView>
-        
+        }
 
         <NavLink href="/resenas" style="@LinkStyle">
             <div style="@CardStyle">
-                <img src=https://res.cloudinary.com/dbbqddxcd/image/upload/v1771517191/Rese%C3%B1a_ktyu8c.png alt="Reseñas" style="@IconStyle" />
+                <img src="https://res.cloudinary.com/dbbqddxcd/image/upload/v1771517191/Rese%C3%B1a_ktyu8c.png" alt="Reseñas" style="@IconStyle" />
                 <div style="@TextStyle">Reseñas</div>
             </div>
         </NavLink>
 
         <NavLink href="/favoritos" style="@LinkStyle">
             <div style="@CardStyle">
-                <img src=https://res.cloudinary.com/dbbqddxcd/image/upload/v1771517191/Favoritos_iccqiw.png alt="Favoritos" style="@IconStyle" />
+                <img src="https://res.cloudinary.com/dbbqddxcd/image/upload/v1771517191/Favoritos_iccqiw.png" alt="Favoritos" style="@IconStyle" />
                 <div style="@TextStyle">Favoritos</div>
             </div>
         </NavLink>
 
-        <AuthorizeView Roles="Admin,Bibliotecario">
-        <NavLink href="/editoriales" style="@LinkStyle">
-            <div style="@CardStyle">
-                    <img src=https://res.cloudinary.com/dbbqddxcd/image/upload/v1771517191/Editorial_bdbxna.png alt="Editoriales" style="@IconStyle" />
-                <div style="@TextStyle">Editoriales</div>
-            </div>
-        </NavLink>
-        </AuthorizeView>
+        @* ✅ SOLO Admin/Bibliotecario *@
+        @if (esAdminOBiblio)
+        {
+            <NavLink href="/editoriales" style="@LinkStyle">
+                <div style="@CardStyle">
+                    <img src="https://res.cloudinary.com/dbbqddxcd/image/upload/v1771517191/Editorial_bdbxna.png" alt="Editoriales" style="@IconStyle" />
+                    <div style="@TextStyle">Editoriales</div>
+                </div>
+            </NavLink>
+        }
 
         <div style="@CardStyle" @onclick="Logout">
-            <img src=https://res.cloudinary.com/dbbqddxcd/image/upload/v1771517814/Salir_qgyeoc.png alt="Salir" style="@IconStyle" />
+            <img src="https://res.cloudinary.com/dbbqddxcd/image/upload/v1771517814/Salir_qgyeoc.png" alt="Salir" style="@IconStyle" />
             <div style="@TextStyle">Salir</div>
         </div>
 
@@ -69,6 +74,24 @@
 
 @code
 {
+    private UsuarioPublicoDto? usuario;
+    private bool esAdminOBiblio;
+
+    protected override async Task OnInitializedAsync()
+    {
+        usuario = await Sesion.ObtenerUsuarioAsync();
+
+        // Si entran al menú sin sesión, mandalos al login
+        if (usuario is null)
+        {
+            Nav.NavigateTo("/");
+            return;
+        }
+
+        // ✅ Chequeo simple por rol (según tu DTO del login)
+        esAdminOBiblio = usuario.NombreRol is "Admin" or "Bibliotecario";
+    }
+
     // Para que el <a> (NavLink) no pinte azul ni subraye
     string LinkStyle =
         "text-decoration:none;" +
@@ -101,9 +124,11 @@
         "color:black;" +
         "text-align:center;";
 
-    void Logout()
+    private void Logout()
     {
-        // TODO: acá podés borrar token/estado de sesión (localStorage, auth state, etc.)
-        Nav.NavigateTo("/", true); // true => fuerza recarga limpia
+        // Si tu sesión guarda token, acá es donde lo limpiás.
+        // Si tu UsuarioSesionService tiene un método tipo CerrarSesionAsync(), llamalo acá.
+        // Por ahora: volver al login y recargar.
+        Nav.NavigateTo("/", true);
     }
 }

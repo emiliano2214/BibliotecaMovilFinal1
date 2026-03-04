@@ -4,7 +4,7 @@ using BibliotecaMovil.Server.Repositories;
 using Microsoft.AspNetCore.Authorization;
 
 namespace BibliotecaMovil.Server.Controllers;
-[Authorize(Roles = "Lector,Admin")]
+[Authorize(Roles = "Lector,Admin,Bibliotecario")]
 [ApiController]
 [Route("api/[controller]")]
 public class FavoritoController : ControllerBase

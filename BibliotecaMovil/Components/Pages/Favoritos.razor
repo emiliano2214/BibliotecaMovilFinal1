@@ -3,7 +3,8 @@
 @using BibliotecaMovil.Shared.Interfaces
 @using Microsoft.AspNetCore.Authorization
 @inject IFavoritoService FavoritoService
-@attribute [Authorize(Roles = "Lector, Admin")]
+@attribute [Authorize(Roles = "Lector,Admin,Bibliotecario")]
+
 @inject BibliotecaMovil.Services.UsuarioSesionService Sesion
 
 <div style="background:#777FF5; min-height:100vh; display:flex; flex-direction:column;">

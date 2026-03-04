@@ -21,9 +21,10 @@ public class UsuarioAuthService : IUsuarioAuthService
         return await resp.Content.ReadFromJsonAsync<LoginResponseDto>();
     }
 
-    public async Task<bool> RegisterAsync(RegisterRequestDto req)
+    public async Task<(bool Ok, int StatusCode, string Body)> RegisterDebugAsync(RegisterRequestDto req)
     {
         var resp = await _httpClient.PostAsJsonAsync("api/UsuarioAuth/register", req);
-        return resp.IsSuccessStatusCode;
+        var body = await resp.Content.ReadAsStringAsync();
+        return (resp.IsSuccessStatusCode, (int)resp.StatusCode, body);
     }
 }

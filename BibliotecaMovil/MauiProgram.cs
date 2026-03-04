@@ -24,12 +24,19 @@ namespace BibliotecaMovil
 #endif
 
             string serverUrl;
-#if ANDROID
-            serverUrl = "http://10.0.2.2:7250";
-#else
-            serverUrl = "http://localhost:7250";
-#endif
 
+#if USE_PRODUCTION
+    // Dispositivo físico → servidor MonsterASP
+    serverUrl = "https://bibliotecamovil.runasp.net/";
+#elif DEBUG
+#if ANDROID
+        serverUrl = "http://10.0.2.2:7250/";   // emulador Android → PC
+#else
+            serverUrl = "http://localhost:7250/";   // Windows local
+#endif
+#else
+    serverUrl = "https://bibliotecamovil.runasp.net/";
+#endif
             // ✅ Sesión + handler
             builder.Services.AddSingleton<UsuarioSesionService>();
             builder.Services.AddTransient<JwtAuthorizationHeaderService>();
@@ -39,7 +46,7 @@ namespace BibliotecaMovil
             {
                 client.BaseAddress = new Uri(serverUrl);
             })
-            .AddHttpMessageHandler<JwtAuthorizationHeaderService>();
+                .AddHttpMessageHandler<JwtAuthorizationHeaderService>();
 
             // ✅ Este HttpClient es el que se inyecta en FavoritoService, LibroService, etc.
             builder.Services.AddScoped(sp =>

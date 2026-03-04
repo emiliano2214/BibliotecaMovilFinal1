@@ -82,8 +82,8 @@ public class EditorialRepository : IEditorialRepository
         {
             // NO setear IdEditorial (lo genera la DB)
             Nombre = dto.Nombre.Trim(),
-            Pais = string.IsNullOrWhiteSpace(dto.Pais) ? null : dto.Pais.Trim(),
-            Ciudad = string.IsNullOrWhiteSpace(dto.Ciudad) ? null : dto.Ciudad.Trim(),
+            Pais = string.IsNullOrWhiteSpace(dto.Pais) ? null : dto.Pais!.Trim(),
+            Ciudad = string.IsNullOrWhiteSpace(dto.Ciudad) ? null : dto.Ciudad!.Trim(),
         };
 
         _context.Editoriales.Add(entity);
