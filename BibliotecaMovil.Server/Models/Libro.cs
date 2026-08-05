@@ -14,8 +14,6 @@ namespace BibliotecaMovil.Server.Models
         public string Titulo { get; set; } = string.Empty;
         public string Resumen { get; set; } = string.Empty;
         public DateTime AnioPublicacion { get; set; }
-
-        // Si en DB NO existe ImagenUrl, borrala o ignorala (ver abajo)
         public string? ImagenUrl { get; set; }
 
         public int IdEditorial { get; set; }

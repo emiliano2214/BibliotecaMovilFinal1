@@ -9,16 +9,12 @@ namespace BibliotecaMovil.Shared.DTOs;
 public class LibroUpdateDto
 {
     public string Titulo { get; set; } = string.Empty;
-
     public string? Resumen { get; set; }
-
     public DateTime? FechaEmision { get; set; }
-
     public int AutorId { get; set; }
-
     public int EditorialId { get; set; }
-
     public int CategoriaId { get; set; }
-
     public int CantidadEjemplares { get; set; }
+    public string? ImagenUrl { get; set; }
+
 }

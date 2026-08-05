@@ -22,4 +22,16 @@ public class AutorService : IAutorService
     {
         return await _httpClient.GetFromJsonAsync<AutorDto>($"api/autor/{id}");
     }
+
+    public async Task<bool> AddAutorAsync(AutorCreateDto dto)
+    {
+        var resp = await _httpClient.PostAsJsonAsync("api/autor", dto);
+
+        if (resp.IsSuccessStatusCode)
+            return true;
+
+        var body = await resp.Content.ReadAsStringAsync();
+
+        throw new Exception($"HTTP {(int)resp.StatusCode}: {body}");
+    }
 }

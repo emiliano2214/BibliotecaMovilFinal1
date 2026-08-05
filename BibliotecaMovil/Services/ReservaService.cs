@@ -15,12 +15,36 @@ public class ReservaService : IReservaService
 
     public async Task<List<ReservaDto>> GetReservasByUsuarioIdAsync(int usuarioId)
     {
-        return await _httpClient.GetFromJsonAsync<List<ReservaDto>>($"api/reserva/usuario/{usuarioId}") ?? new List<ReservaDto>();
+        return await _httpClient.GetFromJsonAsync<List<ReservaDto>>($"api/reserva/usuario/{usuarioId}")
+               ?? new List<ReservaDto>();
     }
 
-    public async Task<bool> CreateReservaAsync(ReservaDto reserva)
+    public async Task<List<ReservaDto>> GetAllReservasAsync()
     {
-        var response = await _httpClient.PostAsJsonAsync("api/reserva", reserva);
+        return await _httpClient.GetFromJsonAsync<List<ReservaDto>>("api/reserva")
+               ?? new List<ReservaDto>();
+    }
+
+    public async Task<(bool ok, string? error)> CreateReservaAsync(int idLibro)
+    {
+        var dto = new ReservaCreateDto { IdLibro = idLibro };
+        var response = await _httpClient.PostAsJsonAsync("api/reserva", dto);
+
+        if (response.IsSuccessStatusCode) return (true, null);
+
+        var msg = await response.Content.ReadAsStringAsync();
+        return (false, string.IsNullOrWhiteSpace(msg) ? "No se pudo crear la reserva." : msg);
+    }
+
+    public async Task<bool> CancelarReservaAsync(int reservaId)
+    {
+        var response = await _httpClient.DeleteAsync($"api/reserva/{reservaId}");
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> CancelarReservaAdminAsync(int reservaId)
+    {
+        var response = await _httpClient.DeleteAsync($"api/reserva/{reservaId}/admin");
         return response.IsSuccessStatusCode;
     }
 }

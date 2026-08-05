@@ -17,11 +17,9 @@
 
         <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
 
-            <!-- Izquierda -->
             <div style="display:flex; gap:10px; align-items:center;">
                 <div style="width:40px; height:40px; background:#0050FF;"></div>
 
-                @* ✅ Solo Admin/Bibliotecario ven Nuevo *@
                 @if (usuario is not null && (usuario.NombreRol == "Admin" || usuario.NombreRol == "Bibliotecario"))
                 {
                     <button style="height:40px; padding:0 12px; background:#0050FF; border:none; cursor:pointer;"
@@ -31,7 +29,6 @@
                 }
             </div>
 
-            <!-- Derecha -->
             <NavLink href="/menu" style="text-decoration:none;">
                 <div style="
                     width:40px; height:40px;
@@ -51,16 +48,21 @@
         </div>
     </div>
 
-    <div style="flex:1; background:white;">
-        <div style="padding:10px 20px; font-weight:bold;">Lista de Libros</div>
+    <div style="flex:1; background:white; padding:16px 14px 24px 14px;">
+        <div style="padding:0 6px 14px 6px; font-weight:bold; font-size:22px;">Lista de Libros</div>
 
         @if (!string.IsNullOrWhiteSpace(mensaje))
         {
-            <div style="padding:10px 20px; color:green; font-weight:bold;">@mensaje</div>
+            <div style="margin:0 6px 12px 6px; padding:10px 12px; color:green; font-weight:bold; background:#e9ffe9; border-radius:10px;">
+                @mensaje
+            </div>
         }
+
         @if (!string.IsNullOrWhiteSpace(error))
         {
-            <div style="padding:10px 20px; color:#b00020; font-weight:bold;">Error: @error</div>
+            <div style="margin:0 6px 12px 6px; padding:10px 12px; color:#b00020; font-weight:bold; background:#ffe5ea; border-radius:10px;">
+                Error: @error
+            </div>
         }
 
         @if (cargando)
@@ -77,27 +79,92 @@
         }
         else
         {
-            @foreach (var libro in libros)
-            {
-                <div style="display:grid; grid-template-columns:1fr auto auto; align-items:center; margin:10px 0; padding:10px 20px; border-bottom:2px solid #777FF5; column-gap:12px;">
-                    <div>@libro.Titulo</div>
+            <div style="display:flex; flex-direction:column; gap:14px;">
+                @foreach (var libro in libros)
+                {
+                    <div style="
+                        background:#f8f8f8;
+                        border-radius:18px;
+                        padding:12px;
+                        display:grid;
+                        grid-template-columns:72px 1fr auto;
+                        column-gap:12px;
+                        align-items:center;
+                        box-shadow:0 2px 8px rgba(0,0,0,0.10);">
 
-                    @* ✅ Editar solo Admin/Bibliotecario *@
-                    @if (usuario is not null && (usuario.NombreRol == "Admin" || usuario.NombreRol == "Bibliotecario"))
-                    {
-                        <button style="height:34px; padding:0 10px; background:#DDDDDD; border:none; cursor:pointer;"
-                                @onclick="() => IrEditar(libro.IdLibro)">
-                            ✏️ Editar
-                        </button>
-                    }
+                        <!-- IMAGEN -->
+                        <div style="
+                            width:72px;
+                            height:96px;
+                            border-radius:10px;
+                            overflow:hidden;
+                            background:#d0d0d0;
+                            display:flex;
+                            align-items:center;
+                            justify-content:center;">
+                            @if (!string.IsNullOrWhiteSpace(libro.ImagenUrl))
+                            {
+                                <img src="@libro.ImagenUrl"
+                                     alt="Portada"
+                                     style="width:100%; height:100%; object-fit:cover;" />
 
-                    <div style="font-size:24px; cursor:pointer;" @onclick="() => ToggleFavorito(libro)">
-                        <span style="color:@(EsFavorito(libro) ? "gold" : "gray");">
-                            @(EsFavorito(libro) ? "★" : "☆")
-                        </span>
+                                <div style="font-size:10px; word-break:break-all; margin-top:6px;">
+                                    @libro.ImagenUrl
+                                </div>
+                            }
+                            else
+                            {
+                                <div style="width:100%; height:100%; background:gray;"></div>
+
+                                <div style="font-size:10px; color:red; margin-top:6px;">
+                                    ImagenUrl NULL o vacía
+                                </div>
+                            }
+                        </div>
+
+                        <!-- DATOS -->
+                        <div style="display:flex; flex-direction:column; gap:6px; min-width:0;">
+                            <div style="font-size:22px; font-weight:bold; line-height:1.1;">
+                                @libro.Titulo
+                            </div>
+
+                            <div style="font-size:14px; color:#444;">
+                                @(string.IsNullOrWhiteSpace(libro.Resumen)
+                                    ? "Sin resumen disponible."
+                                    : libro.Resumen)
+                            </div>
+
+                            <div style="font-size:13px; color:#666;">
+                                Ejemplares: @libro.CantidadEjemplares
+                            </div>
+                        </div>
+
+                        <!-- ACCIONES -->
+                        <div style="display:flex; flex-direction:column; align-items:center; gap:10px;">
+                            @if (usuario is not null && (usuario.NombreRol == "Admin" || usuario.NombreRol == "Bibliotecario"))
+                            {
+                                <button style="
+                                    min-width:88px;
+                                    height:36px;
+                                    padding:0 10px;
+                                    background:#DDDDDD;
+                                    border:none;
+                                    border-radius:8px;
+                                    cursor:pointer;"
+                                        @onclick="() => IrEditar(libro.IdLibro)">
+                                    ✏️ Editar
+                                </button>
+                            }
+
+                            <div style="font-size:28px; cursor:pointer;" @onclick="() => ToggleFavorito(libro)">
+                                <span style="color:@(EsFavorito(libro) ? "gold" : "gray");">
+                                    @(EsFavorito(libro) ? "★" : "☆")
+                                </span>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            }
+                }
+            </div>
         }
     </div>
 </div>

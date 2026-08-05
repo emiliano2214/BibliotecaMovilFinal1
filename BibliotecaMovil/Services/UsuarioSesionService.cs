@@ -29,7 +29,7 @@ public class UsuarioSesionService
 
     public void CerrarSesion()
     {
-        SecureStorage.Remove("USER");
-        SecureStorage.Remove("TOKEN");
+        SecureStorage.Remove(TOKEN_KEY);
+        SecureStorage.Remove(USER_KEY);
     }
 }

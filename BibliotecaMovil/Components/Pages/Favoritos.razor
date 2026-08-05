@@ -3,6 +3,7 @@
 @using BibliotecaMovil.Shared.Interfaces
 @using Microsoft.AspNetCore.Authorization
 @inject IFavoritoService FavoritoService
+@inject ILibroService LibroService
 @attribute [Authorize(Roles = "Lector,Admin,Bibliotecario")]
 
 @inject BibliotecaMovil.Services.UsuarioSesionService Sesion
@@ -48,7 +49,9 @@
                                     height:70px; border-bottom:2px solid #777FF5; margin-bottom:10px;">
 
                     <div style="display:flex; flex-direction:column;">
-                        <div style="font-weight:bold;">Libro: @f.IdLibro</div>
+                        <div style="font-weight:bold;">
+                            Libro: @(tituloPorId.TryGetValue(f.IdLibro, out var t) ? t : $"(Id {f.IdLibro})")
+                        </div>                        
                         <div style="font-size:12px;">
                             Marcado: @f.FechaAgregado.ToString("dd/MM/yyyy")
                         </div>
@@ -68,8 +71,10 @@
     private List<FavoritoDto>? favoritos;
     private string? error;
     private string filtro = "";
+    private List<LibroDto> libros = new();
+    private Dictionary<int, string> tituloPorId = new();
 
-    private int usuarioId;                 // ✅ ahora existe
+    private int usuarioId;                 
     private UsuarioPublicoDto? Usuario;    // opcional, por si querés mostrar nombre
 
     protected override async Task OnInitializedAsync()
@@ -83,7 +88,7 @@
             return;
         }
 
-        usuarioId = Usuario.IdUsuario;     // ✅ sale de la sesión
+        usuarioId = Usuario.IdUsuario;     // sale de la sesión
         await Cargar();
     }
 
@@ -99,7 +104,19 @@
         try
         {
             error = null;
+
+            // 1) favoritos
             favoritos = await FavoritoService.GetFavoritosByUsuarioAsync(usuarioId);
+
+            // 2) libros (solo una vez o cuando esté vacío)
+            if (libros.Count == 0)
+            {
+                libros = await LibroService.GetLibrosAsync();
+
+                tituloPorId = libros
+                    .GroupBy(l => l.IdLibro)
+                    .ToDictionary(g => g.Key, g => g.First().Titulo);
+            }
         }
         catch (Exception ex)
         {

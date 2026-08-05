@@ -2,7 +2,7 @@
 using System.Security.Claims;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
-using BibliotecaMovil.Server.Models; // <-- o el namespace real donde está UsuarioAuthData
+using BibliotecaMovil.Server.Models; 
 namespace BibliotecaMovil.Server.Security;
 
 public sealed class JwtTokenService : IJwtTokenService
@@ -46,12 +46,12 @@ public sealed class JwtTokenService : IJwtTokenService
         var credentials = new SigningCredentials(signingKey, SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(
-            issuer: issuer,
-            audience: audience,
-            claims: claims,
-            notBefore: DateTime.UtcNow,
-            expires: DateTime.UtcNow.AddMinutes(expireMinutes),
-            signingCredentials: credentials
+            issuer: issuer,                                         //quien creó el token
+            audience: audience,                                     //quien puede usarlo
+            claims: claims,                                         //datos del usuario
+            notBefore: DateTime.UtcNow,                             
+            expires: DateTime.UtcNow.AddMinutes(expireMinutes),     //tiempo de expiración
+            signingCredentials: credentials                         //firma
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);

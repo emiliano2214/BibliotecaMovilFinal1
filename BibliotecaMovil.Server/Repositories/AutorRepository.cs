@@ -40,4 +40,19 @@ public class AutorRepository : IAutorRepository
             Pais = autor.Nacionalidad
         };
     }
+
+    public async Task<bool> AddAutorAsync(AutorCreateDto dto)
+    {
+        var autor = new Models.Autor
+        {
+            Nombre = dto.Nombre.Trim(),
+            Apellido = dto.Apellidos.Trim(),
+            Nacionalidad = ""   
+        };
+
+        _context.Autores.Add(autor);
+        await _context.SaveChangesAsync();
+
+        return true;
+    }
 }

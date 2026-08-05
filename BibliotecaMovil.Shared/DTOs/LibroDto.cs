@@ -9,5 +9,6 @@ public class LibroDto
     public int IdCategoria { get; set; }
     public int IdEditorial { get; set; }
     public List<AutorDto> Autores { get; set; } = new();
-
+    public int CantidadEjemplares { get; set; }
+    public string? ImagenUrl { get; set; }
 }

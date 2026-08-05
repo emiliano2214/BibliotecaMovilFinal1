@@ -146,15 +146,23 @@
                 @foreach (var r in Resultado.Resenas)
                 {
                     <div style="border-bottom:1px solid #ddd; padding:8px 0;">
-                        <b>Puntuación:</b> @(r.Puntuacion?.ToString("0.0") ?? "-")
 
-                        @if (!string.IsNullOrWhiteSpace(r.Titulo))
+                        <div><b>@(r.TituloLibro ?? $"LibroId: {r.IdLibro}")</b></div>
+
+                        <div><b>Puntuación:</b> @(r.Puntuacion?.ToString("0.0") ?? "-")</div>
+
+                        @if (!string.IsNullOrWhiteSpace(r.Comentario))
                         {
-                            <div><b>@r.Titulo</b></div>
+                            <div>@r.Comentario</div>
                         }
 
-                        <div>@r.Contenido</div>
-                        <div style="font-size:12px; opacity:.7;">@r.FechaCreacion.ToShortDateString()</div>
+                        <div style="font-size:12px; opacity:.7;">
+                            @r.FechaResena.ToShortDateString()
+                        </div>
+
+                        <div style="font-size:12px; opacity:.7;">
+                            UsuarioId: @r.IdUsuario
+                        </div>
                     </div>
                 }
 

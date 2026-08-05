@@ -1,28 +1,456 @@
 @page "/resenas"
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using BibliotecaMovil.Shared.DTOs
+@using BibliotecaMovil.Shared.Interfaces
 @attribute [Authorize(Roles = "Lector")]
 
+@inject IResenaService ResenaService
+
 <div style="background:#777FF5; min-height:100vh; display:flex; flex-direction:column;">
+
+    <!-- HEADER -->
     <div style="padding:60px 20px 20px 20px; display:grid; grid-template-columns:1fr auto;">
         <div style="font-size:28px; font-weight:bold;">Reseña</div>
-        <div>
-            <!-- Menú -> /menu -->
-            <NavLink href="/menu" style="text-decoration:none; color:black; display:block;">
-                <div style="background:#0050FF; padding:8px 6px; display:flex; flex-direction:column; gap:3px; cursor:pointer;">
-                    <div style="height:2px; width:20px; background:black;"></div>
-                    <div style="height:2px; width:20px; background:black;"></div>
-                    <div style="height:2px; width:20px; background:black;"></div>
-                </div>
-            </NavLink>
-        </div>
+
+        <NavLink href="/menu" style="text-decoration:none; color:black; display:block;">
+            <div style="background:#0050FF; padding:8px 6px; display:flex; flex-direction:column; gap:3px; cursor:pointer;">
+                <div style="height:2px; width:20px; background:black;"></div>
+                <div style="height:2px; width:20px; background:black;"></div>
+                <div style="height:2px; width:20px; background:black;"></div>
+            </div>
+        </NavLink>
     </div>
 
+
+    <!-- CONTENEDOR PRINCIPAL -->
     <div style="flex:1; background:white; padding:20px;">
-        <div style="height:100px; border-bottom:2px solid #777FF5; margin-bottom:20px;"></div>
-        <div style="height:100px; border-bottom:2px solid #777FF5; margin-bottom:20px;"></div>
 
-        <button style="margin-top:20px; width:100%; height:48px; background:#0050FF; border:none; color:black; font-size:18px;">
-            Realizar reseña
+        <!-- BUSCADOR DE LIBRO (para ver reseñas) -->
+        <div style="border:2px solid #777FF5; padding:16px; border-radius:8px; margin-bottom:16px;">
+
+            <div style="font-size:16px; font-weight:bold; margin-bottom:10px;">
+                Buscar libro para ver reseñas
+            </div>
+
+            <InputText @bind-Value="busquedaTitulo"
+                       placeholder="Escribí el título..."
+                       style="width:100%; height:36px; background:#DDDDDD; border:none; padding:0 10px;" />
+
+            <div style="display:flex; gap:10px; margin-top:10px;">
+
+                <button type="button"
+                        @onclick="BuscarLibroDesdeBusquedaAsync"
+                        disabled="@buscandoLibro"
+                        style="flex:1; height:40px; background:#0050FF; border:none; color:black;">
+                    @(buscandoLibro ? "Buscando..." : "Buscar")
+                </button>
+
+                <button type="button"
+                        @onclick="LimpiarBusqueda"
+                        style="flex:1; height:40px; background:#AAAAAA; border:none; color:black;">
+                    Limpiar
+                </button>
+
+            </div>
+
+            @if (IdLibroSeleccionado is not null)
+            {
+                <div style="margin-top:10px; font-size:13px; opacity:.85;">
+                    Libro seleccionado: <b>@TituloLibroSeleccionado</b> (Id: @IdLibroSeleccionado)
+                </div>
+            }
+
+            @if (!string.IsNullOrWhiteSpace(mensajeBusqueda))
+            {
+                <div style="margin-top:10px; font-weight:bold; color:@(mensajeBusquedaOk ? "green" : "#b00020");">
+                    @mensajeBusqueda
+                </div>
+            }
+        </div>
+        <!-- LISTA DE RESEÑAS -->
+        @if (IdLibroSeleccionado is not null && resenas.Count > 0)
+        {
+            <h4 style="margin-bottom:14px;">
+                Reseñas de “@TituloLibroSeleccionado” (@resenas.Count)
+            </h4>
+
+            @foreach (var r in resenas)
+            {
+                <div style="border-bottom:2px solid #777FF5; padding:12px 0;">
+
+                    <div style="font-weight:bold;">
+                        @(r.TituloLibro ?? $"LibroId: {r.IdLibro}")
+                    </div>
+
+                    <div>
+                        <b>Puntuación:</b> @(r.Puntuacion?.ToString("0.0") ?? "-")
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(r.Comentario))
+                    {
+                        <div>@r.Comentario</div>
+                    }
+
+                    <div style="font-size:12px; opacity:.7;">
+                        @r.FechaResena.ToShortDateString()
+                    </div>
+
+                </div>
+            }
+        }
+        else if (IdLibroSeleccionado is not null)
+        {
+            <div style="margin-bottom:14px; opacity:.7;">
+                No hay reseñas para “@TituloLibroSeleccionado”.
+            </div>
+        }
+        else
+        {
+            <div style="margin-bottom:14px; opacity:.7;">
+                Buscá un libro para ver sus reseñas.
+            </div>
+        }
+
+
+        <!-- BOTON AGREGAR RESEÑA -->
+        <button @onclick="ToggleFormulario"
+                style="margin-top:20px; width:100%; height:48px; background:#0050FF; border:none; color:black; font-size:18px;">
+            @(mostrarFormulario ? "Ocultar formulario" : "Agregar reseña")
         </button>
+
+
+        <!-- FORMULARIO -->
+        @if (mostrarFormulario)
+        {
+            <div style="margin-top:20px; border:2px solid #777FF5; padding:16px; border-radius:8px;">
+
+                <div style="font-size:18px; font-weight:bold; margin-bottom:10px;">
+                    Nueva reseña
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(mensaje))
+                {
+                    <div style="margin-bottom:10px; font-weight:bold; color:@(mensajeOk ? "green" : "#b00020");">
+                        @mensaje
+                    </div>
+                }
+
+                <EditForm Model="form" OnValidSubmit="GuardarAsync">
+
+                    <DataAnnotationsValidator />
+                    <ValidationSummary />
+
+                    <!-- TITULO LIBRO -->
+                    <div style="margin-bottom:10px;">
+                        <label style="display:block; margin-bottom:6px;">Título del libro</label>
+
+                        <InputText @bind-Value="form.TituloLibro"
+                                   style="width:100%; height:36px; background:#DDDDDD; border:none; padding:0 10px;" />
+
+                        <div style="display:flex; gap:10px; margin-top:10px;">
+
+                            <button type="button"
+                                    @onclick="BuscarLibroAsync"
+                                    disabled="@buscandoLibro"
+                                    style="flex:1; height:40px; background:#0050FF; border:none; color:black;">
+                                @(buscandoLibro ? "Buscando..." : "Buscar libro")
+                            </button>
+
+                            <button type="button"
+                                    @onclick="LimpiarLibro"
+                                    style="flex:1; height:40px; background:#AAAAAA; border:none; color:black;">
+                                Limpiar
+                            </button>
+
+                        </div>
+
+                        @if (IdLibroSeleccionado is not null)
+                        {
+                            <div style="margin-top:10px; font-size:13px; opacity:.85;">
+                                Libro seleccionado: <b>@TituloLibroSeleccionado</b> (Id: @IdLibroSeleccionado)
+                            </div>
+                        }
+
+                    </div>
+
+
+                    <!-- PUNTUACION -->
+                    <div style="margin-bottom:10px;">
+                        <label style="display:block; margin-bottom:6px;">Puntuación (0 a 5)</label>
+
+                        <InputNumber @bind-Value="form.Puntuacion"
+                                     step="0.5"
+                                     style="width:100%; height:36px; background:#DDDDDD; border:none; padding:0 10px;" />
+                    </div>
+
+
+                    <!-- COMENTARIO -->
+                    <div style="margin-bottom:10px;">
+                        <label style="display:block; margin-bottom:6px;">Comentario</label>
+
+                        <InputTextArea @bind-Value="form.Comentario"
+                                       style="width:100%; height:90px; background:#DDDDDD; border:none; padding:10px;" />
+                    </div>
+
+
+                    <!-- BOTONES -->
+                    <div style="display:flex; gap:10px;">
+
+                        <button type="submit"
+                                disabled="@guardando"
+                                style="flex:1; height:44px; background:#0050FF; border:none; color:black; font-size:16px;">
+                            @(guardando ? "Guardando..." : "Guardar")
+                        </button>
+
+                        <button type="button"
+                                @onclick="Cancelar"
+                                style="flex:1; height:44px; background:#AAAAAA; border:none; color:black; font-size:16px;">
+                            Cancelar
+                        </button>
+
+                    </div>
+
+                </EditForm>
+
+            </div>
+        }
+
     </div>
+
 </div>
+
+
+@code {
+
+    private bool mostrarFormulario = false;
+    private bool guardando = false;
+    private bool buscandoLibro = false;
+
+    private string? mensaje;
+    private bool mensajeOk;
+
+    private ResenaForm form = new();
+    private List<ResenaDto> resenas = new();
+
+    private int? IdLibroSeleccionado;
+    private string? TituloLibroSeleccionado;
+
+    private string busquedaTitulo = string.Empty;
+    private string? mensajeBusqueda;
+    private bool mensajeBusquedaOk;
+
+    private async Task BuscarLibroDesdeBusquedaAsync()
+    {
+        mensajeBusqueda = null;
+
+        if (string.IsNullOrWhiteSpace(busquedaTitulo))
+        {
+            mensajeBusquedaOk = false;
+            mensajeBusqueda = "Escribí el título del libro.";
+            return;
+        }
+
+        buscandoLibro = true;
+
+        try
+        {
+            var titulo = busquedaTitulo.Trim();
+
+            var id = await ResenaService.GetLibroIdByTituloAsync(titulo);
+
+            if (id is null)
+            {
+                IdLibroSeleccionado = null;
+                TituloLibroSeleccionado = null;
+                resenas = new();
+
+                mensajeBusquedaOk = false;
+                mensajeBusqueda = "No se encontró el libro con ese título.";
+                return;
+            }
+
+            IdLibroSeleccionado = id.Value;
+            TituloLibroSeleccionado = titulo;
+
+            await CargarResenasAsync();
+
+            mensajeBusquedaOk = true;
+            mensajeBusqueda = "Reseñas cargadas.";
+        }
+        catch (Exception ex)
+        {
+            mensajeBusquedaOk = false;
+            mensajeBusqueda = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            buscandoLibro = false;
+        }
+    }
+
+    private void LimpiarBusqueda()
+    {
+        busquedaTitulo = string.Empty;
+
+        IdLibroSeleccionado = null;
+        TituloLibroSeleccionado = null;
+
+        resenas = new();
+        mensajeBusqueda = null;
+    }
+
+    private void ToggleFormulario()
+    {
+        mostrarFormulario = !mostrarFormulario;
+        mensaje = null;
+    }
+
+
+    private void Cancelar()
+    {
+        mostrarFormulario = false;
+        mensaje = null;
+
+        form = new();
+        resenas = new();
+
+        IdLibroSeleccionado = null;
+        TituloLibroSeleccionado = null;
+    }
+
+
+    private void LimpiarLibro()
+    {
+        form.TituloLibro = string.Empty;
+
+        IdLibroSeleccionado = null;
+        TituloLibroSeleccionado = null;
+
+        resenas = new();
+        mensaje = null;
+    }
+
+
+    private async Task BuscarLibroAsync()
+    {
+        mensaje = null;
+
+        if (string.IsNullOrWhiteSpace(form.TituloLibro))
+        {
+            mensajeOk = false;
+            mensaje = "Escribí el título del libro.";
+            return;
+        }
+
+        buscandoLibro = true;
+
+        try
+        {
+            var titulo = form.TituloLibro.Trim();
+
+            var id = await ResenaService.GetLibroIdByTituloAsync(titulo);
+
+            if (id is null)
+            {
+                IdLibroSeleccionado = null;
+                TituloLibroSeleccionado = null;
+                resenas = new();
+
+                mensajeOk = false;
+                mensaje = "No se encontró el libro con ese título.";
+                return;
+            }
+
+            IdLibroSeleccionado = id.Value;
+            TituloLibroSeleccionado = titulo;
+
+            await CargarResenasAsync();
+
+            mensajeOk = true;
+            mensaje = "Libro encontrado y reseñas cargadas.";
+        }
+        catch (Exception ex)
+        {
+            mensajeOk = false;
+            mensaje = $"Error buscando libro: {ex.Message}";
+        }
+        finally
+        {
+            buscandoLibro = false;
+        }
+    }
+
+
+    private async Task CargarResenasAsync()
+    {
+        if (IdLibroSeleccionado is null)
+        {
+            resenas = new();
+            return;
+        }
+
+        resenas = await ResenaService.GetResenasByLibroIdAsync(IdLibroSeleccionado.Value);
+    }
+
+
+    private async Task GuardarAsync()
+    {
+        guardando = true;
+        mensaje = null;
+
+        try
+        {
+            if (IdLibroSeleccionado is null)
+            {
+                mensajeOk = false;
+                mensaje = "Primero buscá y seleccioná un libro.";
+                return;
+            }
+
+            var dto = new ResenaDto
+            {
+                IdLibro = IdLibroSeleccionado.Value,
+                Puntuacion = form.Puntuacion,
+                Comentario = form.Comentario
+            };
+
+            var ok = await ResenaService.CreateResenaAsync(dto);
+
+            if (!ok)
+            {
+                mensajeOk = false;
+                mensaje = "No se pudo guardar la reseña.";
+                return;
+            }
+
+            mensajeOk = true;
+            mensaje = "Reseña guardada.";
+
+            await CargarResenasAsync();
+
+            form.Puntuacion = null;
+            form.Comentario = string.Empty;
+
+            mostrarFormulario = false;
+        }
+        catch (Exception ex)
+        {
+            mensajeOk = false;
+            mensaje = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            guardando = false;
+        }
+    }
+
+
+    private class ResenaForm
+    {
+        public string TituloLibro { get; set; } = string.Empty;
+        public decimal? Puntuacion { get; set; }
+        public string Comentario { get; set; } = string.Empty;
+    }
+
+}

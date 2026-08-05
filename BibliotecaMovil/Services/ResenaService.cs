@@ -18,6 +18,14 @@ public class ResenaService : IResenaService
         return await _httpClient.GetFromJsonAsync<List<ResenaDto>>($"api/resena/libro/{libroId}") ?? new List<ResenaDto>();
     }
 
+    public async Task<int?> GetLibroIdByTituloAsync(string titulo)
+    {
+        var resp = await _httpClient.GetAsync($"api/Resena/libroId-por-titulo?titulo={Uri.EscapeDataString(titulo)}");
+        if (!resp.IsSuccessStatusCode) return null;
+
+        return await resp.Content.ReadFromJsonAsync<int>();
+    }
+
     public async Task<bool> CreateResenaAsync(ResenaDto resena)
     {
         var response = await _httpClient.PostAsJsonAsync("api/resena", resena);

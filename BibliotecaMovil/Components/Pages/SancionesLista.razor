@@ -1,104 +1,129 @@
 ﻿@page "/sanciones"
 @using BibliotecaMovil.Shared.DTOs
 @using BibliotecaMovil.Shared.Interfaces
+@using Microsoft.AspNetCore.Components.Routing
+
 @inject ISancionService SancionService
 @inject NavigationManager Nav
 
-<div style="background:#777FF5; min-height:100vh; padding:30px 18px;">
-
+<div style="background:#777FF5; min-height:100vh; display:flex; flex-direction:column;">
     <!-- Header -->
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;">
-        <div style="font-size:26px; font-weight:bold;">Mis sanciones</div>
+    <div style="padding:60px 20px 20px 20px; display:grid; grid-template-columns:1fr auto; align-items:flex-start;">
+        <div style="font-size:28px; font-weight:bold;">Mis sanciones</div>
 
-        <button @onclick="Volver"
-                style="background:#0050FF; border:none; padding:10px 14px; border-radius:10px; font-weight:bold; cursor:pointer;">
-            Volver
-        </button>
+        <NavLink href="/menu" style="text-decoration:none; color:black; display:block;">
+            <div style="background:#0050FF; padding:8px 6px; display:flex; flex-direction:column; gap:3px; cursor:pointer;">
+                <div style="height:2px; width:20px; background:black;"></div>
+                <div style="height:2px; width:20px; background:black;"></div>
+                <div style="height:2px; width:20px; background:black;"></div>
+            </div>
+        </NavLink>
     </div>
 
-    @if (cargando)
-    {
-        <div style="background:white; border-radius:14px; padding:14px;">
-            Cargando sanciones...
+    <!-- Contenido -->
+    <div style="flex:1; background:white; padding:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:10px; flex-wrap:wrap;">
+            <div style="font-weight:bold; font-size:22px;">Lista de sanciones</div>
         </div>
-    }
-    else if (!string.IsNullOrWhiteSpace(error))
-    {
-        <div style="background:#ffd6d6; border-radius:14px; padding:14px; color:#7a0000;">
-            <b>Error:</b> @error
-        </div>
-    }
-    else if (sanciones.Count == 0)
-    {
-        <div style="background:white; border-radius:14px; padding:14px;">
-            No tenés sanciones ✅
-        </div>
-    }
-    else
-    {
-        <!-- Resumen -->
-        <div style="background:white; border-radius:14px; padding:14px; margin-bottom:14px;">
-            <div style="display:flex; gap:12px; flex-wrap:wrap;">
-                <div style="flex:1; min-width:180px;">
-                    <div style="font-size:14px; opacity:.8;">Total sanciones</div>
-                    <div style="font-size:20px; font-weight:bold;">@sanciones.Count</div>
-                </div>
 
-                <div style="flex:1; min-width:180px;">
-                    <div style="font-size:14px; opacity:.8;">Activas</div>
-                    <div style="font-size:20px; font-weight:bold;">
-                        @sanciones.Count(s => s.EstaActiva)
-                    </div>
-                </div>
-
-                <div style="flex:1; min-width:180px;">
-                    <div style="font-size:14px; opacity:.8;">Monto total</div>
-                    <div style="font-size:20px; font-weight:bold;">
-                        $ @(sanciones.Sum(s => s.Monto ?? 0m).ToString("N0"))
-                    </div>
-                </div>
+        @if (cargando)
+        {
+            <div style="padding:12px; border:2px solid #777FF5; border-radius:8px;">
+                Cargando sanciones...
             </div>
-        </div>
+        }
+        else if (!string.IsNullOrWhiteSpace(error))
+        {
+            <div style="padding:12px; border:2px solid #ff3b3b; border-radius:8px; background:#ffecec;">
+                <div style="font-weight:bold;">Error</div>
+                <div style="font-size:14px;">@error</div>
+            </div>
+        }
+        else if (sanciones.Count == 0)
+        {
+            <div style="padding:12px; border:2px dashed #777FF5; border-radius:8px;">
+                No tenés sanciones ✅
+            </div>
+        }
+        else
+        {
+            <!-- Resumen -->
+            <div style="
+                    background:white;
+                    border-radius:12px;
+                    padding:14px 12px;
+                    margin-bottom:14px;
+                    display:flex;
+                    flex-direction:column;
+                    gap:10px;
+                    border:2px solid #777FF5;">
 
-        <!-- Tabla -->
-        <div style="background:white; border-radius:14px; padding:14px;">
-            <div style="display:grid; grid-template-columns:110px 110px 1fr 140px 120px 120px; gap:10px; font-weight:bold; padding:8px 6px; border-bottom:1px solid #ddd;">
-                <div>Fecha</div>
-                <div>Préstamo</div>
-                <div>Motivo</div>
-                <div>Monto</div>
-                <div>Estado</div>
-                <div>Detalle</div>
+                <div style="font-weight:bold; font-size:22px; line-height:1.2;">
+                    Resumen
+                </div>
+
+                <div style="font-size:15px;">
+                    <span style="font-weight:bold;">Total sanciones:</span> @sanciones.Count
+                </div>
+
+                <div style="font-size:15px;">
+                    <span style="font-weight:bold;">Activas:</span> @sanciones.Count(s => s.EstaActiva)
+                </div>
+
+                <div style="font-size:15px;">
+                    <span style="font-weight:bold;">Monto total:</span> $ @(sanciones.Sum(s => s.Monto ?? 0m).ToString("N0"))
+                </div>
             </div>
 
             @foreach (var s in sanciones.OrderByDescending(x => x.FechaInicio))
             {
-                <div style="display:grid; grid-template-columns:110px 110px 1fr 140px 120px 120px; gap:10px; padding:10px 6px; border-bottom:1px solid #eee; align-items:center;">
-                    <div>@s.FechaInicio.ToString("dd/MM/yyyy")</div>
+                <div style="
+                            background:white;
+                            border-radius:12px;
+                            padding:14px 12px;
+                            margin-bottom:14px;
+                            display:flex;
+                            flex-direction:column;
+                            gap:8px;
+                            border:2px solid #777FF5;
+                        ">
+                    <div style="font-weight:bold; font-size:22px; line-height:1.2;">
+                        Sanción préstamo #@s.IdPrestamo
+                    </div>
 
-                    <div>#@s.IdPrestamo</div>
+                    <div style="font-size:15px;">
+                        <span style="font-weight:bold;">Fecha:</span> @s.FechaInicio.ToString("dd/MM/yyyy")
+                    </div>
 
-                    <div style="word-break:break-word;">@s.Motivo</div>
+                    <div style="font-size:15px;">
+                        <span style="font-weight:bold;">Motivo:</span> @s.Motivo
+                    </div>
 
-                    <div>$ @((s.Monto ?? 0m).ToString("N0"))</div>
+                    <div style="font-size:15px;">
+                        <span style="font-weight:bold;">Monto:</span> $ @((s.Monto ?? 0m).ToString("N0"))
+                    </div>
 
-                    @if (s.EstaActiva)
-                    {
-                        <div style="font-weight:bold; color:#b10000;">Activa</div>
-                    }
-                    else
-                    {
-                        <div style="font-weight:bold; color:#0a6b00;">Pagada</div>
-                    }
+                    <div style="
+                                width:fit-content;
+                                padding:6px 10px;
+                                border-radius:999px;
+                                font-weight:bold;
+                                font-size:13px;
+                                background-color:@ObtenerFondoEstado(s);
+                                color:@ObtenerColorEstado(s);">
+                        @ObtenerEstadoVisual(s)
+                    </div>
 
-                    <button @onclick="() => IrADetalle(s.IdPrestamo)"
-                            style="background:#0050FF; border:none; padding:8px 10px; border-radius:10px; cursor:pointer; font-weight:bold;">
-                        Ver
-                    </button>
+                    <div style="margin-top:6px;">
+                        <button @onclick="() => IrADetalle(s.IdPrestamo)"
+                                style="background:#0050FF; border:none; padding:8px 12px; font-weight:bold; cursor:pointer;">
+                            Ver detalle
+                        </button>
+                    </div>
                 </div>
             }
-        </div>
-    }
+        }
+    </div>
 </div>
 
 @code {
@@ -113,7 +138,7 @@
             cargando = true;
             error = null;
 
-            sanciones = await SancionService.GetMisSancionesAsync();
+            sanciones = await SancionService.GetMisSancionesAsync() ?? new List<SancionDto>();
         }
         catch (Exception ex)
         {
@@ -125,9 +150,24 @@
         }
     }
 
+    private string ObtenerEstadoVisual(SancionDto s)
+    {
+        return s.EstaActiva ? "Activa" : "Pagada";
+    }
+
+    private string ObtenerColorEstado(SancionDto s)
+    {
+        return s.EstaActiva ? "#b00020" : "#0f5132";
+    }
+
+    private string ObtenerFondoEstado(SancionDto s)
+    {
+        return s.EstaActiva ? "#f8d7da" : "#d1e7dd";
+    }
+
     private void IrADetalle(int prestamoId)
         => Nav.NavigateTo($"/sanciones/{prestamoId}");
 
     private void Volver()
-        => Nav.NavigateTo("/home"); // o /menu según tu app
+        => Nav.NavigateTo("/home");
 }

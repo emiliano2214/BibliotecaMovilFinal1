@@ -1,6 +1,9 @@
 ﻿using BibliotecaMovil.Server.Data;
+using BibliotecaMovil.Server.LogicaNegocio;
+using BibliotecaMovil.Server.Repositories;
 using BibliotecaMovil.Server.Security;
 using BibliotecaMovil.Server.Services.Security;
+using BibliotecaMovil.Shared.Interfaces;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -33,11 +36,13 @@ builder.Services.AddScoped<BibliotecaMovil.Server.Repositories.IUsuarioAuthRepos
 builder.Services.AddScoped<BibliotecaMovil.Server.Repositories.IUsuarioRepository, BibliotecaMovil.Server.Repositories.UsuarioRepository>();
 builder.Services.AddScoped<BibliotecaMovil.Server.Security.IJwtTokenService,BibliotecaMovil.Server.Security.JwtTokenService>();
 builder.Services.AddSingleton<BibliotecaMovil.Server.Security.IPasswordService, BibliotecaMovil.Server.Security.PasswordService>();
+builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.ISancionLogicaNegocioService, BibliotecaMovil.Server.LogicaNegocio.SancionLogicaNegocioService>();
+builder.Services.AddScoped<BibliotecaMovil.Server.Repositories.CloudinaryRepository>();
+builder.Services.AddScoped<BibliotecaMovil.Server.LogicaNegocio.CloudinaryService>();
 
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
 // JWT Authentication
 builder.Services

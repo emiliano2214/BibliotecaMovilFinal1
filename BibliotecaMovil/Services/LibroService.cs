@@ -37,7 +37,7 @@ public class LibroService : ILibroService
 
         if (resp.IsSuccessStatusCode) return true;
 
-        // 👇 te deja ver el error real del backend
+        // te deja ver el error real del backend
         var body = await resp.Content.ReadAsStringAsync();
         throw new Exception(string.IsNullOrWhiteSpace(body)
             ? $"Error creando libro: {resp.StatusCode}"

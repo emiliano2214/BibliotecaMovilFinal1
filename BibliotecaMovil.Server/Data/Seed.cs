@@ -33,7 +33,7 @@ public static class Seed
             3,
             "123456");
 
-        // 🔥 Si ya existe el libro seed, no sembramos de nuevo
+        // Si ya existe el libro seed, no sembramos de nuevo
         if (await context.Libros.AnyAsync(l => l.Titulo == SeedTitulo))
             return;
 

@@ -24,25 +24,42 @@ public class LibroRepository : ILibroRepository
                 Resumen = l.Resumen,
                 IdCategoria = l.IdCategoria,
                 IdEditorial = l.IdEditorial,
-                AnioPublicacion = l.AnioPublicacion
+                AnioPublicacion = l.AnioPublicacion,
+                ImagenUrl = l.ImagenUrl,
+                CantidadEjemplares = _context.Ejemplares.Count(e => e.IdLibro == l.IdLibro)
             })
             .ToListAsync();
     }
 
     public async Task<LibroDto?> GetLibroByIdAsync(int id)
     {
-        var libro = await _context.Libros.FindAsync(id);
-        if (libro == null) return null;
-
-        return new LibroDto
-        {
-            IdLibro = libro.IdLibro,
-            Titulo = libro.Titulo,
-            Resumen = libro.Resumen,
-            IdCategoria = libro.IdCategoria,
-            IdEditorial = libro.IdEditorial,
-            AnioPublicacion = libro.AnioPublicacion
-        };
+        return await _context.Libros
+            .Where(l => l.IdLibro == id)
+            .Select(l => new LibroDto
+            {
+                IdLibro = l.IdLibro,
+                Titulo = l.Titulo,
+                Resumen = l.Resumen,
+                IdCategoria = l.IdCategoria,
+                IdEditorial = l.IdEditorial,
+                AnioPublicacion = l.AnioPublicacion,
+                ImagenUrl = l.ImagenUrl,
+                Autores = _context.LibroAutor
+                    .Where(la => la.IdLibro == l.IdLibro)
+                    .Join(
+                        _context.Autores,
+                        la => la.IdAutor,
+                        a => a.IdAutor,
+                        (la, a) => new AutorDto
+                        {
+                            IdAutor = a.IdAutor,
+                            Nombre = a.Nombre,
+                            Apellidos = a.Apellido
+                        })
+                    .ToList(),
+                CantidadEjemplares = _context.Ejemplares.Count(e => e.IdLibro == l.IdLibro)
+            })
+            .FirstOrDefaultAsync();
     }
 
     public async Task<List<LibroDto>> GetLibrosByCategoriaAsync(int categoriaId)
@@ -56,20 +73,21 @@ public class LibroRepository : ILibroRepository
                 Resumen = l.Resumen,
                 IdCategoria = l.IdCategoria,
                 IdEditorial = l.IdEditorial,
-                AnioPublicacion = l.AnioPublicacion
+                AnioPublicacion = l.AnioPublicacion,
+                ImagenUrl = l.ImagenUrl,
+                CantidadEjemplares = _context.Ejemplares.Count(e => e.IdLibro == l.IdLibro)
             })
             .ToListAsync();
     }
 
     public async Task<int> AddLibroAsync(LibroCreateDto dto)
     {
-        // Validación rápida
         if (dto.AutorId <= 0) throw new Exception("AutorId inválido.");
         if (dto.EditorialId <= 0) throw new Exception("EditorialId inválido.");
         if (dto.CategoriaId <= 0) throw new Exception("CategoriaId inválido.");
         if (dto.CantidadEjemplares <= 0) throw new Exception("CantidadEjemplares inválida.");
+        if (string.IsNullOrWhiteSpace(dto.Titulo)) throw new Exception("El título es obligatorio.");
 
-        // (Opcional) validar existencia FK
         var autorExiste = await _context.Autores.AnyAsync(a => a.IdAutor == dto.AutorId);
         if (!autorExiste) throw new Exception("El autor seleccionado no existe.");
 
@@ -79,28 +97,25 @@ public class LibroRepository : ILibroRepository
         var categoriaExiste = await _context.Categorias.AnyAsync(c => c.IdCategoria == dto.CategoriaId);
         if (!categoriaExiste) throw new Exception("La categoría seleccionada no existe.");
 
-        // Crear libro
         var libro = new Libro
         {
             Titulo = dto.Titulo.Trim(),
-            Resumen = dto.Resumen,
+            Resumen = dto.Resumen ?? string.Empty,
             IdCategoria = dto.CategoriaId,
             IdEditorial = dto.EditorialId,
-            // tu modelo se llama AnioPublicacion (DateTime)
-            AnioPublicacion = dto.FechaEmision ?? DateTime.Now
+            AnioPublicacion = dto.FechaEmision ?? DateTime.Now,
+            ImagenUrl = dto.ImagenUrl
         };
 
         _context.Libros.Add(libro);
-        await _context.SaveChangesAsync(); // para obtener IdLibro
+        await _context.SaveChangesAsync();
 
-        // Relación libro-autor (tabla intermedia)
         _context.LibroAutor.Add(new LibroAutor
         {
             IdLibro = libro.IdLibro,
             IdAutor = dto.AutorId
         });
 
-        // Crear N ejemplares
         for (int i = 1; i <= dto.CantidadEjemplares; i++)
         {
             _context.Ejemplares.Add(new Ejemplar
@@ -122,19 +137,31 @@ public class LibroRepository : ILibroRepository
         var libro = await _context.Libros
             .FirstOrDefaultAsync(l => l.IdLibro == idLibro);
 
-        if (libro is null) return false;
+        if (libro is null)
+            return false;
+
+        if (dto.AutorId <= 0) throw new Exception("AutorId inválido.");
+        if (dto.EditorialId <= 0) throw new Exception("EditorialId inválido.");
+        if (dto.CategoriaId <= 0) throw new Exception("CategoriaId inválido.");
+        if (dto.CantidadEjemplares <= 0) throw new Exception("CantidadEjemplares inválida.");
+        if (string.IsNullOrWhiteSpace(dto.Titulo)) throw new Exception("El título es obligatorio.");
 
         libro.Titulo = dto.Titulo.Trim();
-        libro.Resumen = dto.Resumen;
+        libro.Resumen = dto.Resumen ?? string.Empty;
         libro.IdCategoria = dto.CategoriaId;
         libro.IdEditorial = dto.EditorialId;
         libro.AnioPublicacion = dto.FechaEmision ?? libro.AnioPublicacion;
+        libro.ImagenUrl = dto.ImagenUrl;
 
         var rel = await _context.LibroAutor.FirstOrDefaultAsync(x => x.IdLibro == idLibro);
 
         if (rel is null)
         {
-            _context.LibroAutor.Add(new LibroAutor { IdLibro = idLibro, IdAutor = dto.AutorId });
+            _context.LibroAutor.Add(new LibroAutor
+            {
+                IdLibro = idLibro,
+                IdAutor = dto.AutorId
+            });
         }
         else
         {
@@ -142,9 +169,11 @@ public class LibroRepository : ILibroRepository
         }
 
         var existentes = await _context.Ejemplares.CountAsync(e => e.IdLibro == idLibro);
+
         if (dto.CantidadEjemplares > existentes)
         {
             var aCrear = dto.CantidadEjemplares - existentes;
+
             for (int i = 1; i <= aCrear; i++)
             {
                 _context.Ejemplares.Add(new Ejemplar
@@ -157,6 +186,21 @@ public class LibroRepository : ILibroRepository
                 });
             }
         }
+        else if (dto.CantidadEjemplares < existentes)
+        {
+            var aEliminar = existentes - dto.CantidadEjemplares;
+
+            var ejemplaresLibres = await _context.Ejemplares
+                .Where(e => e.IdLibro == idLibro && e.Estado == "Disponible")
+                .OrderByDescending(e => e.IdEjemplar)
+                .Take(aEliminar)
+                .ToListAsync();
+
+            if (ejemplaresLibres.Count < aEliminar)
+                throw new Exception("No se pueden reducir ejemplares porque algunos no están disponibles.");
+
+            _context.Ejemplares.RemoveRange(ejemplaresLibres);
+        }
 
         await _context.SaveChangesAsync();
         return true;
@@ -165,26 +209,29 @@ public class LibroRepository : ILibroRepository
     public async Task<bool> DeleteLibroAsync(int idLibro)
     {
         var libro = await _context.Libros.FirstOrDefaultAsync(l => l.IdLibro == idLibro);
-        if (libro is null) return false;
+        if (libro is null)
+            return false;
 
-        // Borro dependencias primero (si no tenés cascade)
-        var relaciones = await _context.LibroAutor.Where(x => x.IdLibro == idLibro).ToListAsync();
+        var relaciones = await _context.LibroAutor
+            .Where(x => x.IdLibro == idLibro)
+            .ToListAsync();
+
         if (relaciones.Count > 0)
             _context.LibroAutor.RemoveRange(relaciones);
 
-        var ejemplares = await _context.Ejemplares.Where(e => e.IdLibro == idLibro).ToListAsync();
+        var ejemplares = await _context.Ejemplares
+            .Where(e => e.IdLibro == idLibro)
+            .ToListAsync();
+
         if (ejemplares.Count > 0)
             _context.Ejemplares.RemoveRange(ejemplares);
 
-        // ⚠️ Si tenés préstamos relacionados con ejemplares, esto puede fallar.
-        // En ese caso hay que validar "no eliminar si tiene préstamos".
         _context.Libros.Remove(libro);
 
         await _context.SaveChangesAsync();
         return true;
     }
 
-    // Generamos el codigo de cada ejemplar
     private static string GenerarCodigoInventario(int idLibro, int correlativo)
         => $"LIB-{idLibro:D6}-EJ-{correlativo:D4}";
 }

@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace BibliotecaMovil.Server.Controllers;
 
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = "Admin,Bibliotecario")]
 [ApiController]
 [Route("api/[controller]")]
 public class EditorialController : ControllerBase

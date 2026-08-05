@@ -37,18 +37,18 @@ namespace BibliotecaMovil
 #else
     serverUrl = "https://bibliotecamovil.runasp.net/";
 #endif
-            // ✅ Sesión + handler
+            // Sesión + handler
             builder.Services.AddSingleton<UsuarioSesionService>();
             builder.Services.AddTransient<JwtAuthorizationHeaderService>();
 
-            // ✅ HttpClientFactory + handler
+            // HttpClientFactory + handler
             builder.Services.AddHttpClient("Api", client =>
             {
                 client.BaseAddress = new Uri(serverUrl);
             })
                 .AddHttpMessageHandler<JwtAuthorizationHeaderService>();
 
-            // ✅ Este HttpClient es el que se inyecta en FavoritoService, LibroService, etc.
+            // Este HttpClient es el que se inyecta en FavoritoService, LibroService, etc.
             builder.Services.AddScoped(sp =>
                 sp.GetRequiredService<IHttpClientFactory>().CreateClient("Api"));
 
@@ -66,6 +66,7 @@ namespace BibliotecaMovil
             builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.ISancionService, BibliotecaMovil.Services.SancionService>();
             builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IUsuarioAuthService, BibliotecaMovil.Services.UsuarioAuthService>();
             builder.Services.AddScoped<BibliotecaMovil.Shared.Interfaces.IUsuarioService, BibliotecaMovil.Services.UsuarioService>();
+            builder.Services.AddScoped<CloudinaryService>();
 
             return builder.Build();
         }

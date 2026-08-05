@@ -198,11 +198,9 @@ public sealed class BusquedaController : ControllerBase
                     IdResena = x.IdResena,
                     IdUsuario = x.IdUsuario,
                     IdLibro = x.IdLibro,
-                    Titulo = null,
-                    Contenido = x.Comentario,
+                    Comentario = x.Comentario,
                     Puntuacion = x.Puntuacion,
-                    FechaCreacion = x.FechaResena,
-                    FechaModificacion = null
+                    FechaResena = x.FechaResena
                 })
                 .ToListAsync(ct);
         }

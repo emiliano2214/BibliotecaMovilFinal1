@@ -13,14 +13,27 @@ public class PrestamoService : IPrestamoService
         _httpClient = httpClient;
     }
 
+    public async Task<List<PrestamoDto>> GetAllPrestamosAsync()
+    {
+        return await _httpClient.GetFromJsonAsync<List<PrestamoDto>>("api/prestamo")
+               ?? new List<PrestamoDto>();
+    }
+
     public async Task<List<PrestamoDto>> GetPrestamosByUsuarioIdAsync(int usuarioId)
     {
-        return await _httpClient.GetFromJsonAsync<List<PrestamoDto>>($"api/prestamo/usuario/{usuarioId}") ?? new List<PrestamoDto>();
+        return await _httpClient.GetFromJsonAsync<List<PrestamoDto>>($"api/prestamo/usuario/{usuarioId}")
+               ?? new List<PrestamoDto>();
     }
 
     public async Task<bool> CreatePrestamoAsync(PrestamoDto prestamo)
     {
         var response = await _httpClient.PostAsJsonAsync("api/prestamo", prestamo);
+        return response.IsSuccessStatusCode;
+    }
+
+    public async Task<bool> RegistrarDevolucionAsync(int prestamoId)
+    {
+        var response = await _httpClient.PutAsync($"api/prestamo/{prestamoId}/devolver", null);
         return response.IsSuccessStatusCode;
     }
 }

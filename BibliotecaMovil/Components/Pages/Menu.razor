@@ -1,4 +1,4 @@
-@page "/menu"
+﻿@page "/menu"
 @using BibliotecaMovil.Shared.DTOs
 @inject NavigationManager Nav
 @inject BibliotecaMovil.Services.UsuarioSesionService Sesion
@@ -24,24 +24,24 @@
         <NavLink href="/prestamos" style="@LinkStyle">
             <div style="@CardStyle">
                 <img src="https://res.cloudinary.com/dbbqddxcd/image/upload/v1771517191/Ejemplares_aoiltg.png" alt="Prestamos" style="@IconStyle" />
-                <div style="@TextStyle">Préstamos</div>
+                <div style="@TextStyle">Prestamos</div>
             </div>
         </NavLink>
 
-        @* ✅ SOLO Admin/Bibliotecario *@
+        @* âœ… SOLO Admin/Bibliotecario *@
         @if (esAdminOBiblio)
         {
             <NavLink href="/busqueda" style="@LinkStyle">
                 <div style="@CardStyle">
                     <img src="https://res.cloudinary.com/dbbqddxcd/image/upload/v1771517191/Buscar_horcyw.png" alt="Busqueda" style="@IconStyle" />
-                    <div style="@TextStyle">Búsqueda</div>
+                    <div style="@TextStyle">Busqueda</div>
                 </div>
             </NavLink>
         }
 
         <NavLink href="/resenas" style="@LinkStyle">
             <div style="@CardStyle">
-                <img src="https://res.cloudinary.com/dbbqddxcd/image/upload/v1771517191/Rese%C3%B1a_ktyu8c.png" alt="Reseñas" style="@IconStyle" />
+                <img src="https://res.cloudinary.com/dbbqddxcd/image/upload/v1771517191/Rese%C3%B1a_ktyu8c.png" alt="ReseÃ±as" style="@IconStyle" />
                 <div style="@TextStyle">Reseñas</div>
             </div>
         </NavLink>
@@ -53,7 +53,7 @@
             </div>
         </NavLink>
 
-        @* ✅ SOLO Admin/Bibliotecario *@
+        @* SOLO Admin/Bibliotecario *@
         @if (esAdminOBiblio)
         {
             <NavLink href="/editoriales" style="@LinkStyle">
@@ -63,6 +63,27 @@
                 </div>
             </NavLink>
         }
+
+        
+        <NavLink href="/reservas" style="@LinkStyle">
+            <div style="@CardStyle">
+                <img src="https://res.cloudinary.com/dbbqddxcd/image/upload/v1771517191/Ejemplares_aoiltg.png" alt="Reservas" style="@IconStyle" />
+                <div style="@TextStyle">Reservas</div>
+            </div>
+        </NavLink>
+<NavLink href="/prestamos" style="@LinkStyle">
+            <div style="@CardStyle">
+                <img src="https://res.cloudinary.com/dbbqddxcd/image/upload/v1771517191/Prestamo_sdw33y.png" alt="Prestamo" style="@IconStyle" />
+                <div style="@TextStyle">Prestamo</div>
+            </div>
+        </NavLink>
+
+        <NavLink href="/home" style="@LinkStyle">
+            <div style="@CardStyle">
+                <img src="https://res.cloudinary.com/dbbqddxcd/image/upload/v1772719483/home_rge93k.png" alt="Inicio" style="@IconStyle" />
+                <div style="@TextStyle">Inicio</div>
+            </div>
+        </NavLink>
 
         <div style="@CardStyle" @onclick="Logout">
             <img src="https://res.cloudinary.com/dbbqddxcd/image/upload/v1771517814/Salir_qgyeoc.png" alt="Salir" style="@IconStyle" />
@@ -81,14 +102,14 @@
     {
         usuario = await Sesion.ObtenerUsuarioAsync();
 
-        // Si entran al menú sin sesión, mandalos al login
+        // Si entran al menÃº sin sesiÃ³n, mandalos al login
         if (usuario is null)
         {
             Nav.NavigateTo("/");
             return;
         }
 
-        // ✅ Chequeo simple por rol (según tu DTO del login)
+        // âœ… Chequeo simple por rol (segÃºn tu DTO del login)
         esAdminOBiblio = usuario.NombreRol is "Admin" or "Bibliotecario";
     }
 
@@ -98,7 +119,7 @@
         "color:black;" +
         "display:block;";
 
-    // Tarjeta clickeable (mantiene tu tamaño 120x120 y el fondo)
+    // Tarjeta clickeable (mantiene tu tamaÃ±o 120x120 y el fondo)
     string CardStyle =
         "width:120px;" +
         "height:120px;" +
@@ -112,7 +133,7 @@
         "-webkit-tap-highlight-color: transparent;" +
         "transition:0.12s;";
 
-    // Ícono
+    // Ãcono
     string IconStyle =
         "width:70px;" +
         "height:70px;";
@@ -126,8 +147,8 @@
 
     private void Logout()
     {
-        // Si tu sesión guarda token, acá es donde lo limpiás.
-        // Si tu UsuarioSesionService tiene un método tipo CerrarSesionAsync(), llamalo acá.
+        // Si tu sesiÃ³n guarda token, acÃ¡ es donde lo limpiÃ¡s.
+        // Si tu UsuarioSesionService tiene un mÃ©todo tipo CerrarSesionAsync(), llamalo acÃ¡.
         // Por ahora: volver al login y recargar.
         Nav.NavigateTo("/", true);
     }

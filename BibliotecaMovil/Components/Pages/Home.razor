@@ -5,7 +5,10 @@
 @using BibliotecaMovil.Services
 @inject UsuarioSesionService Sesion
 @inject IUsuarioService UsuarioService
+@inject IPrestamoService PrestamoService
+@inject ISancionService SancionService
 @inject NavigationManager Nav
+
 @attribute [Authorize]
 
 <div style="background-color:#777FF5; min-height:100vh; display:flex; flex-direction:column;">
@@ -24,16 +27,13 @@
             </div>
         </div>
 
-        <!-- Avatar + menú -->
         <div style="justify-self:end; display:flex; align-items:flex-start; gap:10px;">
-            <!-- Avatar -->
             <div style="width:48px; height:48px; border-radius:24px; background:white; display:flex; align-items:center; justify-content:center; margin-right:10px; overflow:hidden;">
                 <img src="@AvatarUrl"
                      alt="Avatar"
                      style="width:48px; height:48px; object-fit:cover;" />
             </div>
 
-            <!-- Botón menú -->
             <NavLink href="/menu" style="text-decoration:none;">
                 <div style="background:#0050FF;
                     padding:10px 8px;
@@ -42,7 +42,6 @@
                     gap:4px;
                     align-self:flex-start;
                     cursor:pointer;">
-
                     <div style="height:2px; width:24px; background:black;"></div>
                     <div style="height:2px; width:24px; background:black;"></div>
                     <div style="height:2px; width:24px; background:black;"></div>
@@ -51,7 +50,6 @@
         </div>
     </div>
 
-    <!-- Contenido -->
     <div style="background:white; flex:1; overflow:auto;">
         <div style="padding:20px; display:flex; flex-direction:column; gap:24px;">
 
@@ -65,18 +63,17 @@
             }
             else
             {
-                <!-- Stats -->
                 <div>
                     <div style="font-size:18px; font-weight:bold; margin-bottom:12px;">Tus estadisticas</div>
 
                     <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
                         <span style="font-size:24px;">📚</span>
-                        <span>Libros Activos: <strong>@(detalle?.CantPrestamos ?? 0)</strong></span>
+                        <span>Libros Activos: <strong>@LibrosActivos</strong></span>
                     </div>
 
                     <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
                         <span style="font-size:24px;">📅</span>
-                        <span>Por devolver: <strong>@(PorDevolver ?? 0)</strong></span>
+                        <span>Por devolver: <strong>@PorDevolver</strong></span>
                     </div>
 
                     <div style="display:flex; align-items:center; gap:10px;">
@@ -85,7 +82,6 @@
                     </div>
                 </div>
 
-                <!-- Atajos -->
                 <div style="display:grid; grid-template-columns:1fr 1fr; grid-row-gap:20px; grid-column-gap:20px;">
                     <button @onclick="IrLibros"
                             style="height:90px; background:#0050FF; color:black; border:none; font-size:16px;">
@@ -112,15 +108,31 @@
                         Sanciones
                     </button>
                 </div>
+
+                @if (usuario is not null && usuario.NombreRol == "Admin")
+                {
+                    <button @onclick="IrUsuarios"
+                            style="
+                                height:98px;
+                                background:#0050FF;
+                                border:none;
+                                color:black;
+                                font-size:20px;
+                                cursor:pointer;">
+                        Usuarios
+                    </button>
+                }
+
                 @if (!string.IsNullOrWhiteSpace(mensaje))
                 {
                     <div style="background:#e6f0ff; border-radius:14px; padding:12px; margin-bottom:12px;">
                         @mensaje
                     </div>
                 }
+
                 <div style="font-size:18px; font-weight:bold;">Novedades</div>
 
-                @if (!sanciones.Any(s => s.EstaActiva))
+                @if (sanciones.Any(s => s.EstaActiva))
                 {
                     <div style="background:#fff3cd; border-radius:12px; padding:12px;">
                         ⚠️ Tenés @cantidadSancionesActivas sanción(es) activa(s)
@@ -135,35 +147,33 @@
 @code {
     private UsuarioPublicoDto? usuario;
     private UsuarioDetalleDto? detalle;
+    private List<PrestamoDto> prestamos = new();
     private bool Cargando = true;
     private string Error = "";
     private string? mensaje;
     private List<SancionDto> sanciones = new();
+
     private int cantidadSancionesActivas => sanciones.Count(s => s.EstaActiva);
-    private void Pagar(SancionDto s)
-    {
-        // Por ahora solo UI. Después lo conectamos a un endpoint real.
-        mensaje = $"Simulación: pagar sanción #{s.IdSancion} por $ {(s.Monto ?? 0m).ToString("N0")}";
-    }
 
     private decimal TotalDeudaActiva =>
-    sanciones
-        .Where(s => s.EstaActiva)
-        .Sum(s => s.Monto ?? 0m);
+        sanciones
+            .Where(s => s.EstaActiva)
+            .Sum(s => s.Monto ?? 0m);
 
-    // Direccion repetitiva en todo link Claudinary
-    private const string CloudinaryBase = "https://res.cloudinary.com/dbbqddxcd/image/upload/";
-    // Imagen de usuario si éste no posee imagen
-    private const string DefaultAvatarPath = "v1771518924/Avatar_p2iu85.png";
+    private int LibrosActivos =>
+        prestamos.Count(p =>
+            p.FechaDevolucion == null &&
+            string.Equals(p.Estado, "ACTIVO", StringComparison.OrdinalIgnoreCase));
+
+    private int PorDevolver =>
+        prestamos.Count(p => p.FechaDevolucion == null);
+
+    private const string DefaultAvatarUrl = "https://res.cloudinary.com/dbbqddxcd/image/upload/v1771518924/Avatar_p2iu85.png";
 
     private string AvatarUrl =>
         string.IsNullOrWhiteSpace(usuario?.ImgUrl)
-            ? CloudinaryBase + DefaultAvatarPath
-            : CloudinaryBase + usuario!.ImgUrl;
-
-    // Si todavía no tenés este cálculo, lo dejamos como "igual a activos" para que no quede vacío.
-    // Ideal: agregar a UsuarioDetalleDto o hacer endpoint específico (por devolver = préstamos con FechaDevolucion null, por ejemplo).
-    private int? PorDevolver => detalle?.CantPrestamos;
+            ? DefaultAvatarUrl
+            : usuario!.ImgUrl;
 
     protected override async Task OnInitializedAsync()
     {
@@ -171,15 +181,15 @@
         {
             usuario = await Sesion.ObtenerUsuarioAsync();
 
-            // Si entran a /home sin login, lo mandás al login
             if (usuario is null)
             {
                 Nav.NavigateTo("/");
                 return;
             }
 
-            // ✅ Traer estadísticas desde el endpoint detalle
             detalle = await UsuarioService.GetDetalleAsync(usuario.IdUsuario);
+            prestamos = await PrestamoService.GetPrestamosByUsuarioIdAsync(usuario.IdUsuario);
+            sanciones = await SancionService.GetMisSancionesAsync();
         }
         catch (Exception ex)
         {
@@ -190,9 +200,16 @@
             Cargando = false;
         }
     }
+
+    private void Pagar(SancionDto s)
+    {
+        mensaje = $"Simulación: pagar sanción #{s.IdSancion} por $ {(s.Monto ?? 0m).ToString("N0")}";
+    }
+
     void IrLibros() => Nav.NavigateTo("/libros");
     void IrPrestamos() => Nav.NavigateTo("/prestamos");
     void IrResenas() => Nav.NavigateTo("/resenas");
     void IrFavoritos() => Nav.NavigateTo("/favoritos");
     void IrSanciones() => Nav.NavigateTo("/sanciones");
+    void IrUsuarios() => Nav.NavigateTo("/usuarios");
 }

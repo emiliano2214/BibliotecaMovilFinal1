@@ -1,4 +1,4 @@
-﻿using BibliotecaMovil.Server.Models; 
+﻿using BibliotecaMovil.Server.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace BibliotecaMovil.Server.Data;
@@ -25,7 +25,7 @@ public class BibliotecaDbContext : DbContext
     {
         base.OnModelCreating(modelBuilder);
 
-        // ========= TABLAS (opcional pero recomendado) =========
+        // ========= TABLAS =========
         modelBuilder.Entity<Libro>().ToTable("Libros", "dbo");
         modelBuilder.Entity<Autor>().ToTable("Autores", "dbo");
         modelBuilder.Entity<Editorial>().ToTable("Editoriales", "dbo");
@@ -38,6 +38,7 @@ public class BibliotecaDbContext : DbContext
         modelBuilder.Entity<Favorito>().ToTable("Favoritos", "dbo");
         modelBuilder.Entity<Reserva>().ToTable("Reservas", "dbo");
         modelBuilder.Entity<Sancion>().ToTable("Sanciones", "dbo");
+        modelBuilder.Entity<LibroAutor>().ToTable("LibroAutor", "dbo");
 
         // ========= KEYS =========
         modelBuilder.Entity<Autor>().HasKey(x => x.IdAutor);
@@ -52,90 +53,89 @@ public class BibliotecaDbContext : DbContext
         modelBuilder.Entity<Resena>().HasKey(x => x.IdResena);
         modelBuilder.Entity<Reserva>().HasKey(x => x.IdReserva);
         modelBuilder.Entity<Sancion>().HasKey(x => x.IdSancion);
+        modelBuilder.Entity<LibroAutor>().HasKey(x => new { x.IdLibro, x.IdAutor });
 
-        // ========= RELACIONES =========
-
-        // Libro -> Categoria
-        modelBuilder.Entity<Libro>()
-            .Ignore(l => l.ImagenUrl)
-            .HasOne(l => l.Categoria)
-            .WithMany(c => c.Libros)
-            .HasForeignKey(l => l.IdCategoria)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        // Libro -> Editorial
-        modelBuilder.Entity<Libro>()
-            .Ignore(l => l.ImagenUrl)
-            .HasOne(l => l.Editorial)
-            .WithMany(e => e.Libros)
-            .HasForeignKey(l => l.IdEditorial)
-            .OnDelete(DeleteBehavior.Restrict);
-
-
-        // LibroAutor (tabla puente many-to-many)
-        modelBuilder.Entity<LibroAutor>()
-            .ToTable("LibroAutor", "dbo");
-
-        modelBuilder.Entity<LibroAutor>()
-            .HasKey(x => new { x.IdLibro, x.IdAutor });
-
-        modelBuilder.Entity<LibroAutor>()
-            .HasOne(x => x.Libro)
-            .WithMany(l => l.LibroAutores)
-            .HasForeignKey(x => x.IdLibro)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        modelBuilder.Entity<LibroAutor>()
-            .HasOne(x => x.Autor)
-            .WithMany(a => a.LibroAutores)
-            .HasForeignKey(x => x.IdAutor)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        // Favorito -> Usuario / Libro
-        modelBuilder.Entity<Favorito>(e =>
+        // ========= MAPEO EXPLÍCITO LIBRO =========
+        modelBuilder.Entity<Libro>(entity =>
         {
-            e.Property(x => x.FechaAgregado).HasColumnName("FechaAgregado");
+            entity.Property(x => x.IdLibro).HasColumnName("IdLibro");
+            entity.Property(x => x.Titulo).HasColumnName("Titulo");
+            entity.Property(x => x.Resumen).HasColumnName("Resumen");
+            entity.Property(x => x.AnioPublicacion).HasColumnName("AnioPublicacion");
+            entity.Property(x => x.ImagenUrl).HasColumnName("ImagenUrl");
+            entity.Property(x => x.IdEditorial).HasColumnName("IdEditorial");
+            entity.Property(x => x.IdCategoria).HasColumnName("IdCategoria");
 
-            e.HasOne(x => x.Usuario)
+            entity.HasOne(l => l.Categoria)
+                .WithMany(c => c.Libros)
+                .HasForeignKey(l => l.IdCategoria)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(l => l.Editorial)
+                .WithMany(e => e.Libros)
+                .HasForeignKey(l => l.IdEditorial)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ========= LIBROAUTOR =========
+        modelBuilder.Entity<LibroAutor>(entity =>
+        {
+            entity.HasOne(x => x.Libro)
+                .WithMany(l => l.LibroAutores)
+                .HasForeignKey(x => x.IdLibro)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(x => x.Autor)
+                .WithMany(a => a.LibroAutores)
+                .HasForeignKey(x => x.IdAutor)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // ========= FAVORITO =========
+        modelBuilder.Entity<Favorito>(entity =>
+        {
+            entity.Property(x => x.FechaAgregado).HasColumnName("FechaAgregado");
+
+            entity.HasOne(x => x.Usuario)
                 .WithMany(u => u.Favoritos)
                 .HasForeignKey(x => x.IdUsuario)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            e.HasOne(x => x.Libro)
+            entity.HasOne(x => x.Libro)
                 .WithMany(l => l.Favoritos)
                 .HasForeignKey(x => x.IdLibro)
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
-        // Usuario -> Rol
+        // ========= USUARIO -> ROL =========
         modelBuilder.Entity<Usuario>()
             .HasOne(u => u.Rol)
             .WithMany(r => r.Usuarios)
             .HasForeignKey(u => u.IdRol)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Ejemplar -> Libro
+        // ========= EJEMPLAR -> LIBRO =========
         modelBuilder.Entity<Ejemplar>()
             .HasOne(e => e.Libro)
             .WithMany(l => l.Ejemplares)
             .HasForeignKey(e => e.IdLibro)
             .OnDelete(DeleteBehavior.Restrict);
 
-        // Prestamo -> Usuario / Ejemplar
+        // ========= PRESTAMO =========
         modelBuilder.Entity<Prestamo>(entity =>
         {
             entity.HasOne(p => p.Usuario)
-                  .WithMany(u => u.Prestamos)
-                  .HasForeignKey(p => p.IdUsuario)
-                  .OnDelete(DeleteBehavior.Restrict);
+                .WithMany(u => u.Prestamos)
+                .HasForeignKey(p => p.IdUsuario)
+                .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasOne(p => p.Ejemplar)
-                  .WithMany(e => e.Prestamos)
-                  .HasForeignKey(p => p.IdEjemplar)
-                  .OnDelete(DeleteBehavior.Restrict);
+                .WithMany(e => e.Prestamos)
+                .HasForeignKey(p => p.IdEjemplar)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
-        // ✅ Resena -> Usuario / Libro (mapeo explícito para evitar FKs fantasma)
+        // ========= RESENA =========
         modelBuilder.Entity<Resena>(entity =>
         {
             entity.Property(r => r.IdLibro).HasColumnName("IdLibro");
@@ -145,43 +145,42 @@ public class BibliotecaDbContext : DbContext
             entity.Property(r => r.Puntuacion).HasColumnName("Puntuacion");
 
             entity.HasOne(r => r.Usuario)
-                  .WithMany(u => u.Resenas) // si no existe, cambialo a .WithMany()
-                  .HasForeignKey(r => r.IdUsuario)
-                  .OnDelete(DeleteBehavior.Restrict);
+                .WithMany(u => u.Resenas)
+                .HasForeignKey(r => r.IdUsuario)
+                .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasOne(r => r.Libro)
-                  .WithMany(l => l.Resenas) // si no existe, cambialo a .WithMany()
-                  .HasForeignKey(r => r.IdLibro)
-                  .OnDelete(DeleteBehavior.Restrict);
+                .WithMany(l => l.Resenas)
+                .HasForeignKey(r => r.IdLibro)
+                .OnDelete(DeleteBehavior.Restrict);
         });
-        // ✅ Reserva -> Usuario / Ejemplar (o Libro, según tu modelo)
+
+        // ========= RESERVA =========
         modelBuilder.Entity<Reserva>(entity =>
         {
             entity.HasOne(r => r.Usuario)
-                  .WithMany(u => u.Reservas)
-                  .HasForeignKey(r => r.IdUsuario)
-                  .OnDelete(DeleteBehavior.Restrict);
+                .WithMany(u => u.Reservas)
+                .HasForeignKey(r => r.IdUsuario)
+                .OnDelete(DeleteBehavior.Restrict);
 
             entity.HasOne(r => r.Libro)
-                  .WithMany(l => l.Reservas)
-                  .HasForeignKey(r => r.IdLibro)
-                  .OnDelete(DeleteBehavior.Restrict);
+                .WithMany(l => l.Reservas)
+                .HasForeignKey(r => r.IdLibro)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
-
-        // ✅ Sancion -> Usuario (y posiblemente Prestamo)
+        // ========= SANCION =========
         modelBuilder.Entity<Sancion>(entity =>
         {
             entity.HasOne(s => s.Usuario)
-                  .WithMany(u => u.Sanciones)
-                  .HasForeignKey(s => s.IdUsuario)
-                  .OnDelete(DeleteBehavior.Restrict);
+                .WithMany(u => u.Sanciones)
+                .HasForeignKey(s => s.IdUsuario)
+                .OnDelete(DeleteBehavior.Restrict);
 
-            // Si Sancion tiene IdPrestamo + navigation Prestamo:
             entity.HasOne(s => s.Prestamo)
-                  .WithMany(p => p.Sanciones)
-                  .HasForeignKey(s => s.IdPrestamo)
-                  .OnDelete(DeleteBehavior.Restrict);
+                .WithMany(p => p.Sanciones)
+                .HasForeignKey(s => s.IdPrestamo)
+                .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

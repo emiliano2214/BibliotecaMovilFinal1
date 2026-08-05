@@ -1,7 +1,12 @@
 ﻿@page "/prestamos"
 @using BibliotecaMovil.Shared.DTOs
 @using BibliotecaMovil.Shared.Interfaces
+@using Microsoft.AspNetCore.Components.Routing
+@implements IDisposable
+
 @inject IPrestamoService PrestamoService
+@inject NavigationManager Nav
+@inject BibliotecaMovil.Services.UsuarioSesionService Sesion
 
 <div style="background:#777FF5; min-height:100vh; display:flex; flex-direction:column;">
     <!-- Header -->
@@ -17,9 +22,27 @@
         </NavLink>
     </div>
 
-    <!-- Lista -->
+    <!-- Contenido -->
     <div style="flex:1; background:white; padding:20px;">
-        <div style="font-weight:bold; margin-bottom:10px;">Lista de Prestamos</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; gap:10px; flex-wrap:wrap;">
+            <div style="font-weight:bold; font-size:22px;">Lista de Prestamos</div>
+
+            @if (EsAdminOBibliotecario)
+            {
+                <button @onclick="IrNuevoPrestamo"
+                        style="background:#0050FF; border:none; padding:10px 14px; font-weight:bold; cursor:pointer;">
+                    + Prestamo
+                </button>
+            }
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(debugError))
+        {
+            <div style="background:#ffcccc; color:#600; padding:10px; border:2px solid red; margin:10px 0;">
+                <b>DEBUG ERROR</b><br />
+                @debugError
+            </div>
+        }
 
         @if (isLoading)
         {
@@ -37,49 +60,71 @@
         else if (prestamos.Count == 0)
         {
             <div style="padding:12px; border:2px dashed #777FF5; border-radius:8px;">
-                No tenés préstamos registrados.
+                No hay préstamos registrados.
             </div>
         }
         else
         {
-            <!-- Encabezados de columnas -->
-            <div style="
-                    display:grid;
-                    grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
-                    font-weight:bold;
-                    padding:10px 8px;
-                    border-bottom:3px solid #777FF5;
-                    margin-bottom:10px;
-                ">
-                <div>Libro</div>
-                <div>Prestado</div>
-                <div>Vence</div>
-                <div>Devolución</div>
-                <div>Estado</div>
-            </div>
-
             @foreach (var p in prestamos)
             {
                 <div style="
-                            display:grid;
-                            grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
-                            align-items:center;
-                            padding:12px 8px;
-                            border-bottom:2px solid #777FF5;
-                            margin-bottom:10px;
-                            gap:10px;
+                            background:white;
+                            border-radius:12px;
+                            padding:14px 12px;
+                            margin-bottom:14px;
+                            display:flex;
+                            flex-direction:column;
+                            gap:8px;
+                            border:2px solid #777FF5;
                         ">
-                    <div style="font-weight:bold;">@p.TituloLibro</div>
-                    <div>@p.FechaPrestamo.ToString("dd/MM/yyyy")</div>
-                    <div>@p.FechaVencimiento.ToString("dd/MM/yyyy")</div>
-                    <div>
+                    <div style="font-weight:bold; font-size:22px; line-height:1.2;">
+                        @p.TituloLibro
+                    </div>
+
+                    <div style="font-size:15px;">
+                        <span style="font-weight:bold;">Prestado:</span> @p.FechaPrestamo.ToString("dd/MM")
+                    </div>
+
+                    <div style="font-size:15px;">
+                        <span style="font-weight:bold;">Vence:</span> @p.FechaVencimiento.ToString("dd/MM")
+                    </div>
+
+                    <div style="font-size:15px;">
+                        <span style="font-weight:bold;">Devuelto:</span>
                         @(p.FechaDevolucion is null
                                         ? "Pendiente"
-                                        : p.FechaDevolucion.Value.ToString("dd/MM/yyyy"))
+                                        : p.FechaDevolucion.Value.ToString("dd/MM"))
+            </div>
+
+                    <div style="
+                                width:fit-content;
+                                padding:6px 10px;
+                                border-radius:999px;
+                                font-weight:bold;
+                                font-size:13px;
+                                background-color:@ObtenerFondoEstado(p);
+                                color:@ObtenerColorEstado(p);">
+                        @ObtenerEstadoVisual(p)
                     </div>
-                    <div style="font-weight:bold;">@p.Estado</div>
+
+            @if (EsAdminOBibliotecario)
+                    {
+                        <div style="margin-top:6px;">
+                            @if (PuedeDevolver(p))
+                            {
+                                <button @onclick="() => DevolverPrestamo(p.IdPrestamo)"
+                                        style="background:#28a745; border:none; padding:8px 12px; font-weight:bold; cursor:pointer;">
+                                    Devolver
+                                </button>
+                            }
+                            else
+                            {
+                                <span style="font-weight:bold;">Devuelto</span>
+                            }
+                        </div>
+                    }
                 </div>
-                }
+            }
         }
     </div>
 </div>
@@ -87,30 +132,146 @@
 @code {
     private bool isLoading = true;
     private string? error;
+    private string? debugError;
+    private string? rolUsuario;
     private List<PrestamoDto> prestamos = new();
 
-    private int usuarioId = 1;
+    private bool EsAdminOBibliotecario =>
+        rolUsuario == "Admin" || rolUsuario == "Bibliotecario";
 
     protected override async Task OnInitializedAsync()
+    {
+        Nav.LocationChanged += OnLocationChanged;
+        await CargarPrestamosAsync();
+    }
+
+    private string ObtenerEstadoVisual(PrestamoDto p)
+    {
+        if (p.FechaDevolucion != null)
+        {
+            if (p.FechaDevolucion.Value.Date > p.FechaVencimiento.Date)
+                return "Devuelto con demora";
+
+            return "Devuelto";
+        }
+
+        if (DateTime.Today > p.FechaVencimiento.Date)
+            return "Vencido";
+
+        return "Activo";
+    }
+
+    private string ObtenerColorEstado(PrestamoDto p)
+    {
+        if (p.FechaDevolucion != null)
+        {
+            if (p.FechaDevolucion.Value.Date > p.FechaVencimiento.Date)
+                return "#b00020";
+
+            return "#0f5132";
+        }
+
+        if (DateTime.Today > p.FechaVencimiento.Date)
+            return "#b00020";
+
+        return "#084298";
+    }
+
+    private string ObtenerFondoEstado(PrestamoDto p)
+    {
+        if (p.FechaDevolucion != null)
+        {
+            if (p.FechaDevolucion.Value.Date > p.FechaVencimiento.Date)
+                return "#f8d7da";
+
+            return "#d1e7dd";
+        }
+
+        if (DateTime.Today > p.FechaVencimiento.Date)
+            return "#f8d7da";
+
+        return "#cfe2ff";
+    }
+
+    private bool PuedeDevolver(PrestamoDto p)
+    {
+        return p.FechaDevolucion is null && p.Estado != "DEVUELTO";
+    }
+
+    private async void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        if (e.Location.Contains("/prestamos", StringComparison.OrdinalIgnoreCase))
+            await InvokeAsync(CargarPrestamosAsync);
+    }
+
+    private async Task CargarPrestamosAsync()
     {
         try
         {
             isLoading = true;
             error = null;
+            debugError = null;
 
-            prestamos = await PrestamoService.GetPrestamosByUsuarioIdAsync(usuarioId);
+            var usuario = await Sesion.ObtenerUsuarioAsync();
 
-            prestamos = prestamos
-                .OrderByDescending(p => p.FechaPrestamo)
-                .ToList();
+            if (usuario is null)
+            {
+                error = "No hay usuario en sesión.";
+                prestamos = new();
+                return;
+            }
+
+            rolUsuario = usuario.NombreRol;
+
+            if (EsAdminOBibliotecario)
+                prestamos = await PrestamoService.GetAllPrestamosAsync() ?? new();
+            else
+                prestamos = await PrestamoService.GetPrestamosByUsuarioIdAsync(usuario.IdUsuario) ?? new();
         }
         catch (Exception ex)
         {
-            error = ex.Message;
+            error = "No se pudieron cargar los préstamos.";
+            debugError = ex.ToString();
+            prestamos = new();
         }
         finally
         {
             isLoading = false;
+            await InvokeAsync(StateHasChanged);
         }
+    }
+
+    private async Task DevolverPrestamo(int idPrestamo)
+    {
+        try
+        {
+            error = null;
+            debugError = null;
+
+            var ok = await PrestamoService.RegistrarDevolucionAsync(idPrestamo);
+
+            if (!ok)
+            {
+                error = "No se pudo registrar la devolución.";
+                return;
+            }
+
+            await CargarPrestamosAsync();
+        }
+        catch (Exception ex)
+        {
+            error = "Error al registrar la devolución.";
+            debugError = ex.ToString();
+        }
+    }
+
+    private void IrNuevoPrestamo()
+    {
+        Nav.NavigateTo("/prestamo-form");
+    }
+
+    public void Dispose()
+    {
+        Nav.LocationChanged -= OnLocationChanged;
     }
 }

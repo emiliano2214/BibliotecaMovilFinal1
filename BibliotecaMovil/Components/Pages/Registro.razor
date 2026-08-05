@@ -1,9 +1,11 @@
 @page "/registro"
 @using BibliotecaMovil.Shared.DTOs
 @using BibliotecaMovil.Shared.Interfaces
+@using Microsoft.AspNetCore.Components.Forms
 @inject NavigationManager Navigation
 @inject IUsuarioAuthService UsuarioAuthService
 @inject IRolService RolService
+@inject BibliotecaMovil.Services.CloudinaryService CloudinaryService
 
 <div style="background:#777FF5; min-height:100vh; padding:60px 20px 20px 20px;">
     <div style="font-size:32px; text-align:center; margin-bottom:30px;">Registro</div>
@@ -55,6 +57,28 @@
                @bind="repetirPassword"
                style="width:100%; height:36px; background:#DDDDDD; border:none; margin-bottom:20px;" />
 
+        <div>Carpeta de imagen</div>
+        <select @bind="carpetaSeleccionada"
+                style="width:100%; height:36px; background:#DDDDDD; border:none; margin-bottom:10px;">
+            <option value="">-- Seleccione destino --</option>
+            <option value="Imagenes/Libros">Libro</option>
+            <option value="Imagenes/Usuarios">Usuarios</option>
+        </select>
+
+        <div>Imagen</div>
+        <InputFile OnChange="SeleccionarImagen"
+                   accept="image/*"
+                   style="margin-bottom:20px;" />
+
+        @if (!string.IsNullOrWhiteSpace(previewImagen))
+        {
+            <div style="margin-bottom:20px;">
+                <img src="@previewImagen"
+                     alt="Vista previa"
+                     style="width:90px; height:90px; object-fit:cover; border-radius:50%; border:2px solid #ccc;" />
+            </div>
+        }
+
         <div style="display:grid; grid-template-columns:1fr 1fr; grid-column-gap:20px; margin-top:10px;">
             <button disabled="@cargando"
                     style="height:44px; background:#0050FF; border:none; color:black;"
@@ -77,9 +101,12 @@
     private string? mensajeError;
     private bool cargando = false;
 
-    // roles
     private List<RolDto> roles = new();
     private bool cargandoRoles = true;
+
+    private IBrowserFile? imagenSeleccionada;
+    private string carpetaSeleccionada = "Imagenes/Usuarios";
+    private string? previewImagen;
 
     protected override async Task OnInitializedAsync()
     {
@@ -89,7 +116,6 @@
 
             var lista = await RolService.GetRolesAsync();
 
-            // Excluir Admin (por NombreRol)
             roles = lista
                 .Where(r => !string.Equals(r.NombreRol, "Admin", StringComparison.OrdinalIgnoreCase))
                 .ToList();
@@ -104,11 +130,32 @@
         }
     }
 
+    private async Task SeleccionarImagen(InputFileChangeEventArgs e)
+    {
+        mensajeError = null;
+        imagenSeleccionada = e.File;
+        previewImagen = null;
+
+        if (imagenSeleccionada is null)
+            return;
+
+        if (!imagenSeleccionada.ContentType.StartsWith("image/"))
+        {
+            mensajeError = "El archivo seleccionado no es una imagen válida.";
+            imagenSeleccionada = null;
+            return;
+        }
+
+        using var ms = new MemoryStream();
+        await imagenSeleccionada.OpenReadStream(5 * 1024 * 1024).CopyToAsync(ms);
+        var base64 = Convert.ToBase64String(ms.ToArray());
+        previewImagen = $"data:{imagenSeleccionada.ContentType};base64,{base64}";
+    }
+
     private async Task Registrar()
     {
         mensajeError = null;
 
-        // Validaciones básicas
         if (string.IsNullOrWhiteSpace(registerRequestDto.Nombre) ||
             string.IsNullOrWhiteSpace(registerRequestDto.Email) ||
             string.IsNullOrWhiteSpace(registerRequestDto.Password))
@@ -133,7 +180,28 @@
         {
             cargando = true;
 
-            // completar campos internos (si tu API los espera / DB los necesita)
+            if (imagenSeleccionada is not null)
+            {
+                if (string.IsNullOrWhiteSpace(carpetaSeleccionada))
+                {
+                    mensajeError = "Seleccione una carpeta de destino para la imagen.";
+                    return;
+                }
+
+                var resultadoUpload = await CloudinaryService.SubirImagenAsync(
+                    imagenSeleccionada,
+                    carpetaSeleccionada
+                );
+
+                if (resultadoUpload is null || string.IsNullOrWhiteSpace(resultadoUpload.Url))
+                {
+                    mensajeError = "No se pudo subir la imagen.";
+                    return;
+                }
+
+                registerRequestDto.ImgUrl = resultadoUpload.Url;
+            }
+
             registerRequestDto.Activo = true;
             registerRequestDto.FechaAlta = DateTime.Now;
 

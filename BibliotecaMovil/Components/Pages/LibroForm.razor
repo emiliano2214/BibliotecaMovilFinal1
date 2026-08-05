@@ -1,27 +1,43 @@
 @page "/libro-form"
 @page "/libro-form/{IdLibro:int}"
+
 @using BibliotecaMovil.Shared.DTOs
 @using BibliotecaMovil.Shared.Interfaces
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using System.Linq
+
 @inject NavigationManager Nav
 @inject ILibroService LibroService
 @inject IAutorService AutorService
 @inject IEditorialService EditorialService
 @inject ICategoriaService CategoriaService
 @inject BibliotecaMovil.Services.UsuarioSesionService Sesion
+@inject BibliotecaMovil.Services.CloudinaryService CloudinaryService
+
 @attribute [Authorize(Roles = "Admin,Bibliotecario")]
 
 <div style="background:#777FF5; min-height:100vh; display:flex; flex-direction:column;">
     <div style="padding:40px 20px 10px 20px; display:grid; grid-template-columns:auto 1fr auto; column-gap:10px; align-items:center;">
         <div style="width:80px; height:80px; background:white; display:flex; align-items:center; justify-content:center;">
-            <div style="width:64px; height:64px; background:gray; border-radius:32px;"></div>
+            @if (!string.IsNullOrWhiteSpace(previewImagen))
+            {
+                <img src="@previewImagen"
+                     alt="Portada"
+                     style="width:64px; height:64px; object-fit:cover; border-radius:8px;" />
+            }
+            else
+            {
+                <div style="width:64px; height:64px; background:gray; border-radius:8px;"></div>
+            }
         </div>
 
         <div style="font-weight:bold; font-size:22px;">
             @(EsEdicion ? "Editar Libro" : "Nuevo Libro")
         </div>
 
-        <div style="background:#0050FF; width:40px; height:40px; display:flex; align-items:center; justify-content:center;">
+        <div style="background:#0050FF; width:40px; height:40px; display:flex; align-items:center; justify-content:center;"
+             @onclick="IrLibro">
             <span style="font-size:22px;">📚</span>
         </div>
     </div>
@@ -29,7 +45,14 @@
     <div style="flex:1; background:white; padding:20px;">
         @if (!string.IsNullOrWhiteSpace(error))
         {
-            <div style="background:#ffdddd; color:#900; padding:10px; margin-bottom:15px; border-radius:6px;">
+            <div style="
+                background:#ffdddd;
+                color:#900;
+                padding:10px;
+                margin-bottom:15px;
+                border-radius:6px;
+                word-break:break-all;
+                overflow-wrap:anywhere;">
                 ⚠️ @error
             </div>
         }
@@ -40,71 +63,230 @@
         }
         else
         {
-            <div>Título</div>
-            <InputText @bind-Value="dto.Titulo"
-                       style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:10px;" />
+            <EditForm Model="dto" OnValidSubmit="Guardar">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
 
-            <div>Resumen</div>
-            <InputText @bind-Value="dto.Resumen"
-                       style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:10px;" />
+                <div>Título</div>
+                <InputText @bind-Value="dto.Titulo"
+                           style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:10px;" />
 
-            <div>Fecha de emisión</div>
-            <InputDate @bind-Value="dto.FechaEmision"
-                       style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:10px;" />
+                <div>Resumen</div>
+                <InputText @bind-Value="dto.Resumen"
+                           style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:10px;" />
 
-            <div>Autor</div>
-            <InputSelect @bind-Value="dto.AutorId"
-                         style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:10px;">
-                <option value="0">-- Seleccione un autor --</option>
-                @foreach (var a in autores)
+                <div>Fecha de emisión</div>
+                <InputDate @bind-Value="dto.FechaEmision"
+                           style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:10px;" />
+
+                <div>Portada del libro</div>
+                <InputFile OnChange="SeleccionarImagenLibro"
+                           accept="image/*"
+                           style="margin-bottom:10px;" />
+
+                @if (!string.IsNullOrWhiteSpace(nombreImagenSeleccionada))
                 {
-                    <option value="@a.IdAutor">@($"{a.Apellidos}, {a.Nombre}")</option>
+                    <div style="margin-bottom:15px; font-size:13px;">
+                        Archivo: @nombreImagenSeleccionada
+                    </div>
                 }
-            </InputSelect>
 
-            <div>Editorial</div>
-            <InputSelect @bind-Value="dto.EditorialId"
-                         style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:10px;">
-                <option value="0">-- Seleccione una editorial --</option>
-                @foreach (var e in editoriales)
-                {
-                    <option value="@e.IdEditorial">@e.Nombre</option>
-                }
-            </InputSelect>
+                <div style="border:2px solid #777FF5; padding:15px; margin-bottom:15px;">
 
-            <div>Categoría</div>
-            <InputSelect @bind-Value="dto.CategoriaId"
-                         style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:10px;">
-                <option value="0">-- Seleccione una categoría --</option>
-                @foreach (var c in categorias)
-                {
-                    <option value="@c.IdCategoria">@c.Nombre</option>
-                }
-            </InputSelect>
+                    <!-- AUTOR -->
+                    <div style="display:grid; grid-template-columns:1fr auto; column-gap:10px; align-items:end; margin-bottom:10px;">
+                        <div>
+                            <div>Autor</div>
+                            <InputSelect @bind-Value="dto.AutorId"
+                                         style="width:100%; height:34px; background:#DDDDDD; border:none;">
+                                <option value="0">-- Seleccione un autor --</option>
+                                @foreach (var a in autores)
+                                {
+                                    <option value="@a.IdAutor">@($"{a.Apellidos}, {a.Nombre}")</option>
+                                }
+                            </InputSelect>
+                        </div>
 
-            <div>Cantidad de ejemplares</div>
-            <InputNumber @bind-Value="dto.CantidadEjemplares"
-                         style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:20px;" />
+                        @if (PuedeGestionarCategorias)
+                        {
+                            <button type="button"
+                                    disabled="@guardando"
+                                    style="height:34px; background:#0050FF; border:none; padding:0 12px;"
+                                    @onclick="ToggleNuevoAutor">
+                                @(mostrarNuevoAutor ? "Cerrar" : "+ Nuevo")
+                            </button>
+                        }
+                    </div>
 
-            <div style="display:grid; grid-template-columns:1fr 1fr; grid-column-gap:20px; margin-top:10px;">
-                <button disabled="@guardando"
-                        style="height:44px; background:#0050FF; border:none; color:black;"
-                        @onclick="Guardar">
-                    @(guardando ? "Guardando..." : "Aceptar")
-                </button>
+                    @if (PuedeGestionarCategorias && mostrarNuevoAutor)
+                    {
+                        <div style="background:#f4f4f4; padding:12px; border-radius:8px; margin-bottom:10px;">
+                            <div style="font-weight:bold; margin-bottom:8px;">Crear nuevo autor</div>
 
-                <button disabled="@guardando"
-                        style="height:44px; background:red; border:none; color:black;"
-                        @onclick="Cancelar">
-                    Cancelar
-                </button>
-            </div>
+                            <div>Nombre</div>
+                            <InputText @bind-Value="autorNombre"
+                                       style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:10px;" />
+
+                            <div>Apellidos</div>
+                            <InputText @bind-Value="autorApellidos"
+                                       style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:10px;" />
+
+                            @if (!string.IsNullOrWhiteSpace(autorError))
+                            {
+                                <div style="background:#ffdddd; color:#900; padding:8px; margin-bottom:10px; border-radius:6px;">
+                                    ⚠️ @autorError
+                                </div>
+                            }
+
+                            <button type="button"
+                                    disabled="@guardandoAutor"
+                                    style="height:36px; background:green; border:none; padding:0 14px;"
+                                    @onclick="CrearAutor">
+                                @(guardandoAutor ? "Creando..." : "Crear y seleccionar")
+                            </button>
+                        </div>
+                    }
+
+                    <!-- EDITORIAL -->
+                    <div style="display:grid; grid-template-columns:1fr auto; column-gap:10px; align-items:end; margin-bottom:10px;">
+                        <div>
+                            <div>Editorial</div>
+                            <InputSelect @bind-Value="dto.EditorialId"
+                                         style="width:100%; height:34px; background:#DDDDDD; border:none;">
+                                <option value="0">-- Seleccione una editorial --</option>
+                                @foreach (var e in editoriales)
+                                {
+                                    <option value="@e.IdEditorial">@e.Nombre</option>
+                                }
+                            </InputSelect>
+                        </div>
+
+                        @if (PuedeGestionarCategorias)
+                        {
+                            <button type="button"
+                                    disabled="@guardando"
+                                    style="height:34px; background:#0050FF; border:none; padding:0 12px;"
+                                    @onclick="ToggleNuevaEditorial">
+                                @(mostrarNuevaEditorial ? "Cerrar" : "+ Nueva")
+                            </button>
+                        }
+                    </div>
+
+                    @if (PuedeGestionarCategorias && mostrarNuevaEditorial)
+                    {
+                        <div style="background:#f4f4f4; padding:12px; border-radius:8px; margin-bottom:10px;">
+                            <div style="font-weight:bold; margin-bottom:8px;">Crear nueva editorial</div>
+
+                            <div>Nombre</div>
+                            <InputText @bind-Value="editNombre"
+                                       style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:10px;" />
+
+                            <div>País</div>
+                            <InputText @bind-Value="editPais"
+                                       style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:10px;" />
+
+                            <div>Ciudad</div>
+                            <InputText @bind-Value="editCiudad"
+                                       style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:10px;" />
+
+                            @if (!string.IsNullOrWhiteSpace(editError))
+                            {
+                                <div style="background:#ffdddd; color:#900; padding:8px; margin-bottom:10px; border-radius:6px;">
+                                    ⚠️ @editError
+                                </div>
+                            }
+
+                            <button type="button"
+                                    disabled="@guardandoEditorial"
+                                    style="height:36px; background:green; border:none; padding:0 14px;"
+                                    @onclick="CrearEditorial">
+                                @(guardandoEditorial ? "Creando..." : "Crear y seleccionar")
+                            </button>
+                        </div>
+                    }
+
+                    <!-- CATEGORÍA -->
+                    <div style="display:grid; grid-template-columns:1fr auto; column-gap:10px; align-items:end; margin-bottom:10px;">
+                        <div>
+                            <div>Categoría</div>
+                            <InputSelect @bind-Value="dto.CategoriaId"
+                                         style="width:100%; height:34px; background:#DDDDDD; border:none;">
+                                <option value="0">-- Seleccione una categoría --</option>
+                                @foreach (var c in categorias)
+                                {
+                                    <option value="@c.IdCategoria">@c.Nombre</option>
+                                }
+                            </InputSelect>
+                        </div>
+
+                        @if (PuedeGestionarCategorias)
+                        {
+                            <button type="button"
+                                    disabled="@guardando"
+                                    style="height:34px; background:#0050FF; border:none; padding:0 12px;"
+                                    @onclick="ToggleNuevaCategoria">
+                                @(mostrarNuevaCategoria ? "Cerrar" : "+ Nueva")
+                            </button>
+                        }
+                    </div>
+
+                    @if (PuedeGestionarCategorias && mostrarNuevaCategoria)
+                    {
+                        <div style="background:#f4f4f4; padding:12px; border-radius:8px; margin-bottom:10px;">
+                            <div style="font-weight:bold; margin-bottom:8px;">Crear nueva categoría</div>
+
+                            <div>Nombre</div>
+                            <InputText @bind-Value="catNombre"
+                                       style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:10px;" />
+
+                            <div>Descripción (opcional)</div>
+                            <InputText @bind-Value="catDescripcion"
+                                       style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:10px;" />
+
+                            @if (!string.IsNullOrWhiteSpace(catError))
+                            {
+                                <div style="background:#ffdddd; color:#900; padding:8px; margin-bottom:10px; border-radius:6px;">
+                                    ⚠️ @catError
+                                </div>
+                            }
+
+                            <button type="button"
+                                    disabled="@guardandoCategoria"
+                                    style="height:36px; background:green; border:none; padding:0 14px;"
+                                    @onclick="CrearCategoria">
+                                @(guardandoCategoria ? "Creando..." : "Crear y seleccionar")
+                            </button>
+                        </div>
+                    }
+
+                </div>
+
+                <div>Cantidad de ejemplares</div>
+                <InputNumber @bind-Value="dto.CantidadEjemplares"
+                             style="width:100%; height:34px; background:#DDDDDD; border:none; margin-bottom:20px;" />
+
+                <div style="display:grid; grid-template-columns:1fr 1fr; grid-column-gap:20px; margin-top:10px;">
+                    <button type="submit"
+                            disabled="@guardando"
+                            style="height:44px; background:#0050FF; border:none; color:black;">
+                        @(guardando ? "Guardando..." : "Aceptar")
+                    </button>
+
+                    <button type="button"
+                            disabled="@guardando"
+                            style="height:44px; background:red; border:none; color:black;"
+                            @onclick="Cancelar">
+                        Cancelar
+                    </button>
+                </div>
+            </EditForm>
         }
     </div>
 </div>
 
 @code {
-    [Parameter] public int? IdLibro { get; set; }
+    [Parameter] 
+    public int? IdLibro { get; set; }
     private bool EsEdicion => IdLibro.HasValue && IdLibro.Value > 0;
 
     private LibroCreateDto dto = new() { CantidadEjemplares = 1 };
@@ -117,23 +299,126 @@
     private bool cargando;
     private bool guardando;
 
-    protected override async Task OnInitializedAsync()
+    private bool PuedeGestionarCategorias;
+    private bool mostrarNuevaCategoria;
+    private string? catNombre;
+    private string? catDescripcion;
+    private string? catError;
+    private bool guardandoCategoria;
+
+    private bool mostrarNuevoAutor;
+    private string? autorNombre;
+    private string? autorApellidos;
+    private string? autorError;
+    private bool guardandoAutor;
+
+    private bool mostrarNuevaEditorial;
+    private string? editNombre;
+    private string? editCiudad;
+    private string? editPais;
+    private string? editError;
+    private bool guardandoEditorial;
+
+    private bool combosCargados = false;
+
+    private IBrowserFile? imagenSeleccionada;
+    private string? previewImagen;
+    private string? nombreImagenSeleccionada;
+
+    protected override async Task OnParametersSetAsync()
     {
-        var user = await Sesion.ObtenerUsuarioAsync();
-        if (user is null)
+        try
         {
-            Nav.NavigateTo("/", true);
+            cargando = true;
+            error = null;
+
+            var user = await Sesion.ObtenerUsuarioAsync();
+            if (user is null)
+            {
+                Nav.NavigateTo("/", true);
+                return;
+            }
+
+            var rol = user.NombreRol ?? "";
+            PuedeGestionarCategorias = rol == "Admin" || rol == "Bibliotecario";
+
+            if (!combosCargados)
+            {
+                await CargarCombos();
+                combosCargados = true;
+            }
+
+            if (EsEdicion)
+            {
+                var libro = await LibroService.GetLibroByIdAsync(IdLibro!.Value);
+                if (libro is null)
+                {
+                    error = "No se encontró el libro.";
+                    return;
+                }
+
+                dto = new LibroCreateDto
+                {
+                    Titulo = libro.Titulo,
+                    Resumen = libro.Resumen,
+                    FechaEmision = libro.AnioPublicacion,
+                    CategoriaId = libro.IdCategoria,
+                    EditorialId = libro.IdEditorial,
+                    AutorId = libro.Autores.FirstOrDefault()?.IdAutor ?? 0,
+                    CantidadEjemplares = libro.CantidadEjemplares,
+                    ImagenUrl = libro.ImagenUrl
+                };
+
+                previewImagen = libro.ImagenUrl;
+                nombreImagenSeleccionada = null;
+            }
+            else
+            {
+                dto = new LibroCreateDto { CantidadEjemplares = 1 };
+                imagenSeleccionada = null;
+                previewImagen = null;
+                nombreImagenSeleccionada = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            error = "Error inicializando formulario: " + ex.Message;
+        }
+        finally
+        {
+            cargando = false;
+        }
+    }
+
+    private async Task SeleccionarImagenLibro(InputFileChangeEventArgs e)
+    {
+        error = null;
+        imagenSeleccionada = e.File;
+        nombreImagenSeleccionada = null;
+        previewImagen = null;
+
+        if (imagenSeleccionada is null)
+            return;
+
+        if (!imagenSeleccionada.ContentType.StartsWith("image/"))
+        {
+            error = "El archivo seleccionado no es una imagen válida.";
+            imagenSeleccionada = null;
             return;
         }
 
-        await CargarCombos();
+        nombreImagenSeleccionada = imagenSeleccionada.Name;
+
+        using var ms = new MemoryStream();
+        await imagenSeleccionada.OpenReadStream(5 * 1024 * 1024).CopyToAsync(ms);
+        var base64 = Convert.ToBase64String(ms.ToArray());
+        previewImagen = $"data:{imagenSeleccionada.ContentType};base64,{base64}";
     }
 
     private async Task CargarCombos()
     {
         try
         {
-            cargando = true;
             error = null;
 
             autores = await AutorService.GetAutoresAsync() ?? new();
@@ -144,9 +429,183 @@
         {
             error = "Error cargando listas: " + ex.Message;
         }
+    }
+
+    private void ToggleNuevaCategoria()
+    {
+        mostrarNuevaCategoria = !mostrarNuevaCategoria;
+        catError = null;
+    }
+
+    private void ToggleNuevoAutor()
+    {
+        mostrarNuevoAutor = !mostrarNuevoAutor;
+        autorError = null;
+    }
+
+    private void ToggleNuevaEditorial()
+    {
+        mostrarNuevaEditorial = !mostrarNuevaEditorial;
+        editError = null;
+    }
+
+    private async Task CrearAutor()
+    {
+        autorError = null;
+
+        if (string.IsNullOrWhiteSpace(autorNombre) || string.IsNullOrWhiteSpace(autorApellidos))
+        {
+            autorError = "Nombre y apellidos son obligatorios.";
+            return;
+        }
+
+        try
+        {
+            guardandoAutor = true;
+
+            var ok = await AutorService.AddAutorAsync(new AutorCreateDto
+            {
+                Nombre = autorNombre.Trim(),
+                Apellidos = autorApellidos.Trim()
+            });
+
+            if (!ok)
+            {
+                autorError = "No se pudo crear el autor.";
+                return;
+            }
+
+            autores = await AutorService.GetAutoresAsync() ?? new();
+
+            var n = autorNombre.Trim();
+            var a = autorApellidos.Trim();
+
+            var encontrado = autores.FirstOrDefault(x =>
+                string.Equals(x.Nombre?.Trim(), n, StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(x.Apellidos?.Trim(), a, StringComparison.OrdinalIgnoreCase));
+
+            if (encontrado is not null)
+                dto.AutorId = encontrado.IdAutor;
+
+            autorNombre = null;
+            autorApellidos = null;
+            mostrarNuevoAutor = false;
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            autorError = ex.Message;
+        }
         finally
         {
-            cargando = false;
+            guardandoAutor = false;
+        }
+    }
+
+    private async Task CrearEditorial()
+    {
+        editError = null;
+
+        if (string.IsNullOrWhiteSpace(editNombre) ||
+            string.IsNullOrWhiteSpace(editCiudad) ||
+            string.IsNullOrWhiteSpace(editPais))
+        {
+            editError = "El nombre es obligatorio.";
+            return;
+        }
+
+        try
+        {
+            guardandoEditorial = true;
+
+            var created = await EditorialService.CreateEditorialAsync(new EditorialDto
+            {
+                Nombre = editNombre.Trim(),
+                Ciudad = editCiudad.Trim(),
+                Pais = editPais.Trim()
+            });
+
+            if (created == null)
+            {
+                editError = "No se pudo crear la editorial.";
+                return;
+            }
+
+            editoriales = await EditorialService.GetEditorialesAsync() ?? new();
+
+            var nombre = editNombre.Trim();
+            var encontrada = editoriales.FirstOrDefault(e =>
+                string.Equals(e.Nombre?.Trim(), nombre, StringComparison.OrdinalIgnoreCase));
+
+            if (encontrada is not null)
+                dto.EditorialId = created.IdEditorial;
+
+            editNombre = null;
+            editCiudad = null;
+            editPais = null;
+            mostrarNuevaEditorial = false;
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            editError = ex.Message;
+        }
+        finally
+        {
+            guardandoEditorial = false;
+        }
+    }
+
+    private async Task CrearCategoria()
+    {
+        catError = null;
+
+        if (string.IsNullOrWhiteSpace(catNombre))
+        {
+            catError = "El nombre es obligatorio.";
+            return;
+        }
+
+        try
+        {
+            guardandoCategoria = true;
+
+            var ok = await CategoriaService.AddCategoriaAsync(new CategoriaCreateDto
+            {
+                Nombre = catNombre.Trim(),
+                Descripcion = string.IsNullOrWhiteSpace(catDescripcion) ? null : catDescripcion.Trim()
+            });
+
+            if (!ok)
+            {
+                catError = "No se pudo crear la categoría.";
+                return;
+            }
+
+            categorias = await CategoriaService.GetCategoriasAsync() ?? new();
+
+            var nombre = catNombre.Trim();
+            var encontrada = categorias.FirstOrDefault(c =>
+                string.Equals(c.Nombre?.Trim(), nombre, StringComparison.OrdinalIgnoreCase));
+
+            if (encontrada is not null)
+                dto.CategoriaId = encontrada.IdCategoria;
+
+            catNombre = null;
+            catDescripcion = null;
+            mostrarNuevaCategoria = false;
+
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            catError = ex.Message;
+        }
+        finally
+        {
+            guardandoCategoria = false;
         }
     }
 
@@ -176,6 +635,28 @@
         {
             guardando = true;
 
+            if (imagenSeleccionada is not null)
+            {
+                var resultadoUpload = await CloudinaryService.SubirImagenAsync(
+                    imagenSeleccionada,
+                    "Imagenes/Libros"
+                );
+
+                if (resultadoUpload is null || string.IsNullOrWhiteSpace(resultadoUpload.Url))
+                {
+                    error = "No se pudo subir la portada del libro.";
+                    return;
+                }
+
+                // PRUEBA 1 (recibo el URL de Claudinary):
+                // dto.ImagenUrl = resultadoUpload.Url;
+                // error = "FORM DTO URL: " + dto.ImagenUrl;
+                // return;
+
+                // Prueba 2, 3 y 4
+                dto.ImagenUrl = resultadoUpload.Url;
+            }
+
             bool ok;
             if (EsEdicion)
             {
@@ -187,7 +668,8 @@
                     AutorId = dto.AutorId,
                     EditorialId = dto.EditorialId,
                     CategoriaId = dto.CategoriaId,
-                    CantidadEjemplares = dto.CantidadEjemplares
+                    CantidadEjemplares = dto.CantidadEjemplares,
+                    ImagenUrl = dto.ImagenUrl
                 };
 
                 ok = await LibroService.UpdateLibroAsync(IdLibro!.Value, upd);
@@ -216,4 +698,5 @@
     }
 
     private void Cancelar() => Nav.NavigateTo("/libros");
+    private void IrLibro() => Nav.NavigateTo("/libros");
 }

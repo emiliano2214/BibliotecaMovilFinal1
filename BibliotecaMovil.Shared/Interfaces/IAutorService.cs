@@ -6,4 +6,5 @@ public interface IAutorService
 {
     Task<List<AutorDto>> GetAutoresAsync();
     Task<AutorDto?> GetAutorByIdAsync(int id);
+    Task<bool> AddAutorAsync(AutorCreateDto dto);
 }

@@ -13,7 +13,7 @@
 		<Nullable>enable</Nullable>
 
 		<!-- Display name -->
-		<ApplicationTitle>BibliotecaMovil</ApplicationTitle>
+		<ApplicationTitle>Biblioteca</ApplicationTitle>
 
 		<!-- App Identifier -->
 		<ApplicationId>com.companyname.bibliotecamovil</ApplicationId>
@@ -42,8 +42,10 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<!-- App Icon -->
-		<MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#512BD4" />
+		<!-- App Icon: fondo azul (#0D1185), logo blanco encima -->
+		<MauiIcon Include="Resources\AppIcon\appicon.svg"
+				  ForegroundFile="Resources\AppIcon\appicon.svg"
+				  Color="#0D1185" />
 
 		<!-- Splash Screen -->
 		<MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#512BD4" BaseSize="128,128" />

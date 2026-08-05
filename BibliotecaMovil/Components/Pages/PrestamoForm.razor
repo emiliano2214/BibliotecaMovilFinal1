@@ -1,0 +1,360 @@
+﻿@page "/prestamo-form"
+
+@using BibliotecaMovil.Shared.DTOs
+@using BibliotecaMovil.Shared.Interfaces
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+
+@inject NavigationManager Nav
+@inject IPrestamoService PrestamoService
+@inject IEjemplarService EjemplarService
+@inject ILibroService LibroService
+@inject BibliotecaMovil.Services.UsuarioSesionService Sesion
+
+@attribute [Authorize(Roles = "Admin,Bibliotecario")]
+
+<div style="background:#777FF5; min-height:100vh; display:flex; flex-direction:column;">
+    <!-- Header -->
+    <div style="padding:60px 20px 20px 20px; display:grid; grid-template-columns:1fr auto; align-items:flex-start;">
+        <div style="font-size:28px; font-weight:bold;">Nuevo Préstamo</div>
+
+        <div style="display:flex; gap:10px;">
+            <div @onclick="Volver"
+                 style="background:white; padding:10px 14px; border-radius:10px; font-weight:bold; cursor:pointer;">
+                ← Volver
+            </div>
+
+            <NavLink href="/menu" style="text-decoration:none; color:black; display:block;">
+                <div style="background:#0050FF; padding:8px 6px; display:flex; flex-direction:column; gap:3px; cursor:pointer;">
+                    <div style="height:2px; width:20px; background:black;"></div>
+                    <div style="height:2px; width:20px; background:black;"></div>
+                    <div style="height:2px; width:20px; background:black;"></div>
+                </div>
+            </NavLink>
+        </div>
+    </div>
+
+    <!-- Body -->
+    <div style="flex:1; background:white; padding:20px;">
+        <ErrorBoundary>
+            <ChildContent>
+
+                @* DEBUG *@
+                @if (!string.IsNullOrWhiteSpace(debugStep))
+                {
+                    <div style="padding:10px; border:2px solid #777FF5; border-radius:8px; margin-bottom:10px;">
+                        <b>DEBUG STEP:</b> @debugStep
+                    </div>
+                }
+
+                @if (!string.IsNullOrWhiteSpace(debugError))
+                {
+                    <div style="background:#ffcccc; color:#600; padding:10px; border:2px solid red; margin-bottom:10px;">
+                        <b>DEBUG ERROR</b>
+                        <pre style="white-space:pre-wrap; margin:0;">@debugError</pre>
+                    </div>
+                }
+
+                @if (isLoading)
+                {
+                    <div style="padding:12px; border:2px solid #777FF5; border-radius:8px;">
+                        Cargando...
+                    </div>
+                }
+                else if (!string.IsNullOrWhiteSpace(error))
+                {
+                    <div style="padding:12px; border:2px solid #ff3b3b; border-radius:8px; background:#ffecec;">
+                        <div style="font-weight:bold;">Error</div>
+                        <div style="font-size:14px;">@error</div>
+                    </div>
+                }
+                else
+                {
+                    <EditForm Model="prestamo" OnValidSubmit="Guardar">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div style="display:grid; gap:14px; max-width:760px;">
+
+                            <!-- Libro -->
+                            <div>
+                                <div style="font-weight:bold; margin-bottom:6px;">Libro</div>
+
+                                <InputSelect class="form-select" @bind-Value="LibroIdSeleccionado">
+                                    <option value="0">-- Seleccioná un libro --</option>
+                                    @foreach (var l in libros)
+                                    {
+                                        <option value="@l.IdLibro">@l.Titulo</option>
+                                    }
+                                </InputSelect>
+
+                                <div style="font-size:12px; margin-top:6px;">
+                                    Elegí un libro para ver sus ejemplares.
+                                </div>
+                            </div>
+
+                            <!-- Ejemplar -->
+                            <div>
+                                <div style="font-weight:bold; margin-bottom:6px;">Ejemplar</div>
+
+                                @if (LibroIdSeleccionado == 0)
+                                {
+                                    <div style="padding:12px; border:2px dashed #777FF5; border-radius:8px;">
+                                        Seleccioná un libro primero.
+                                    </div>
+                                }
+                                else if (isLoadingEjemplares)
+                                {
+                                    <div style="padding:12px; border:2px solid #777FF5; border-radius:8px;">
+                                        Cargando ejemplares...
+                                    </div>
+                                }
+                                else if (ejemplares.Count == 0)
+                                {
+                                    <div style="padding:12px; border:2px dashed #777FF5; border-radius:8px;">
+                                        Este libro no tiene ejemplares disponibles.
+                                    </div>
+                                }
+                                else
+                                {
+                                    <InputSelect class="form-select" @bind-Value="ejemplarIdSeleccionado">
+                                        <option value="0">-- Seleccioná un ejemplar --</option>
+                                        @foreach (var e in ejemplares)
+                                        {
+                                            <option value="@e.IdEjemplar">
+                                                @($"{e.CodigoInventario} — {e.Estado}")
+                                            </option>
+                                        }
+                                    </InputSelect>
+
+                                    <div style="font-size:12px; margin-top:6px;">
+                                        <b>Disponibles:</b> @ejemplares.Count
+                                    </div>
+                                }
+                            </div>
+
+                            <!-- Fechas -->
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                                <div>
+                                    <div style="font-weight:bold; margin-bottom:6px;">Fecha de préstamo</div>
+                                    <InputDate class="form-control" @bind-Value="prestamo.FechaPrestamo" />
+                                </div>
+
+                                <div>
+                                    <div style="font-weight:bold; margin-bottom:6px;">Fecha de vencimiento</div>
+                                    <InputDate class="form-control" @bind-Value="prestamo.FechaVencimiento" />
+                                </div>
+                            </div>
+
+                            <!-- Botones -->
+                            <div style="display:flex; gap:10px; margin-top:10px;">
+                                <button type="submit"
+                                        disabled="@isSaving"
+                                        style="background:#0050FF; border:none; padding:12px 16px; border-radius:10px; font-weight:bold; cursor:pointer;">
+                                    @(isSaving ? "Guardando..." : "Guardar préstamo")
+                                </button>
+
+                                <button type="button"
+                                        disabled="@isSaving"
+                                        @onclick="Volver"
+                                        style="background:white; border:2px solid #777FF5; padding:12px 16px; border-radius:10px; font-weight:bold; cursor:pointer;">
+                                    Cancelar
+                                </button>
+                            </div>
+
+                        </div>
+                    </EditForm>
+                }
+
+            </ChildContent>
+
+            <ErrorContent Context="ex">
+                <div style="padding:20px; border:3px solid red; background:#ffecec;">
+                    <h3>Error detectado (ErrorBoundary)</h3>
+                    <pre style="white-space:pre-wrap; margin:0;">@ex.ToString()</pre>
+                </div>
+            </ErrorContent>
+        </ErrorBoundary>
+    </div>
+</div>
+
+@code {
+    private bool isLoading = true;
+    private bool isLoadingEjemplares = false;
+    private bool isSaving = false;
+
+    private string? debugError;
+    private string? debugStep;
+    private string? error;
+
+    private List<LibroDto> libros = new();
+    private List<EjemplarDto> ejemplares = new();
+
+    private int ejemplarIdSeleccionado = 0;
+    private EjemplarDto? ejemplarSeleccionado;
+
+    private PrestamoDto prestamo = new();
+
+    // ✅ Propiedad con setter para disparar la carga de ejemplares automáticamente
+    private int _libroIdSeleccionado = 0;
+    private int LibroIdSeleccionado
+    {
+        get => _libroIdSeleccionado;
+        set
+        {
+            if (_libroIdSeleccionado == value) return;
+            _libroIdSeleccionado = value;
+            _ = InvokeAsync(CargarEjemplaresAsync);
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            isLoading = true;
+            error = null;
+            debugError = null;
+
+            debugStep = "1) Obtener usuario de sesión";
+            var usuario = await Sesion.ObtenerUsuarioAsync();
+            if (usuario is null)
+                throw new Exception("No hay sesión iniciada (usuario null).");
+
+            debugStep = "2) Cargar libros (GET)";
+            libros = await LibroService.GetLibrosAsync() ?? new();
+
+            debugStep = "3) Armar préstamo base";
+            prestamo = new PrestamoDto
+            {
+                IdUsuario = usuario.IdUsuario,
+                FechaPrestamo = DateTime.Today,
+                FechaVencimiento = DateTime.Today.AddDays(7),
+                Estado = "ACTIVO"
+            };
+
+            debugStep = null;
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            debugError = ex.ToString();
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task CargarEjemplaresAsync()
+    {
+        try
+        {
+            error = null;
+            debugError = null;
+
+            ejemplares.Clear();
+            ejemplarIdSeleccionado = 0;
+            ejemplarSeleccionado = null;
+
+            if (LibroIdSeleccionado == 0)
+                return;
+
+            isLoadingEjemplares = true;
+            debugStep = "Cargando ejemplares (GET)";
+
+            var lista = await EjemplarService.GetEjemplaresByLibroIdAsync(LibroIdSeleccionado);
+
+            ejemplares = (lista ?? new List<EjemplarDto>())
+                .Where(e => !string.IsNullOrWhiteSpace(e.Estado)
+                            && e.Estado.Trim().Equals("DISPONIBLE", StringComparison.OrdinalIgnoreCase))
+                .OrderBy(e => e.CodigoInventario)
+                .ToList();
+
+            debugStep = null;
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            debugError = ex.ToString();
+        }
+        finally
+        {
+            isLoadingEjemplares = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    // ✅ ACÁ ESTÁ EL MÉTODO Guardar() (y el fix de IdEjemplar)
+    private async Task Guardar()
+    {
+        try
+        {
+            error = null;
+            debugError = null;
+
+            if (LibroIdSeleccionado == 0)
+            {
+                error = "Tenés que seleccionar un libro.";
+                return;
+            }
+
+            if (ejemplarIdSeleccionado == 0)
+            {
+                error = "Tenés que seleccionar un ejemplar.";
+                return;
+            }
+
+            // Para que coincida con el backend (que valida <=)
+            if (prestamo.FechaVencimiento <= prestamo.FechaPrestamo)
+            {
+                error = "La fecha de vencimiento debe ser posterior a la fecha de préstamo.";
+                return;
+            }
+
+            debugStep = "Validando ejemplar seleccionado (GET ejemplar)";
+            ejemplarSeleccionado = await EjemplarService.GetEjemplarByIdAsync(ejemplarIdSeleccionado);
+            if (ejemplarSeleccionado is null)
+            {
+                error = "El ejemplar no existe.";
+                return;
+            }
+
+            if (!string.Equals(ejemplarSeleccionado.Estado?.Trim(), "DISPONIBLE", StringComparison.OrdinalIgnoreCase))
+            {
+                error = "Ese ejemplar no está disponible para préstamo.";
+                return;
+            }
+
+            var libro = libros.FirstOrDefault(l => l.IdLibro == LibroIdSeleccionado);
+            prestamo.TituloLibro = libro?.Titulo ?? "";
+
+            // ✅ FIX CLAVE: mandar el ejemplar al backend
+            prestamo.IdEjemplar = ejemplarIdSeleccionado;
+
+            isSaving = true;
+            debugStep = "Creando préstamo (POST api/prestamo)";
+
+            var ok = await PrestamoService.CreatePrestamoAsync(prestamo);
+            if (!ok)
+            {
+                error = "No se pudo crear el préstamo (endpoint no exitoso).";
+                return;
+            }
+
+            debugStep = null;
+            Nav.NavigateTo("/prestamos");
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+            debugError = ex.ToString();
+        }
+        finally
+        {
+            isSaving = false;
+        }
+    }
+
+    private void Volver() => Nav.NavigateTo("/prestamos");
+}

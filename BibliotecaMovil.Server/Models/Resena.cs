@@ -11,10 +11,9 @@ namespace BibliotecaMovil.Server.Models
         public int IdLibro { get; set; }
         public int IdUsuario { get; set; }
 
-        // ✅ columnas reales en BD
         public decimal? Puntuacion { get; set; }
-        public string Comentario { get; set; } = string.Empty;  // en BD: Comentario
-        public DateTime FechaResena { get; set; }               // en BD: FechaResena
+        public string Comentario { get; set; } = string.Empty;  
+        public DateTime FechaResena { get; set; }               
 
         public Libro? Libro { get; set; }
         public Usuario? Usuario { get; set; }

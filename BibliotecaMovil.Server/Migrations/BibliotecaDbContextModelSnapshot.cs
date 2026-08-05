@@ -34,6 +34,9 @@ namespace BibliotecaMovil.Server.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime?>("FechaNacimiento")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("Nacionalidad")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -148,46 +151,38 @@ namespace BibliotecaMovil.Server.Migrations
                 {
                     b.Property<int>("IdLibro")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("IdLibro");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdLibro"));
 
                     b.Property<DateTime>("AnioPublicacion")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int?>("AutorIdAutor")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("CategoriaIdCategoria")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("EditorialIdEditorial")
-                        .HasColumnType("int");
+                        .HasColumnType("datetime2")
+                        .HasColumnName("AnioPublicacion");
 
                     b.Property<int>("IdCategoria")
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("IdCategoria");
 
                     b.Property<int>("IdEditorial")
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasColumnName("IdEditorial");
 
                     b.Property<string>("ImagenUrl")
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("ImagenUrl");
 
                     b.Property<string>("Resumen")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("Resumen");
 
                     b.Property<string>("Titulo")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("Titulo");
 
                     b.HasKey("IdLibro");
-
-                    b.HasIndex("AutorIdAutor");
-
-                    b.HasIndex("CategoriaIdCategoria");
-
-                    b.HasIndex("EditorialIdEditorial");
 
                     b.HasIndex("IdCategoria");
 
@@ -326,7 +321,7 @@ namespace BibliotecaMovil.Server.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<DateTime>("FechaExpiracion")
+                    b.Property<DateTime?>("FechaExpiracion")
                         .HasColumnType("datetime2");
 
                     b.Property<DateTime>("FechaReserva")
@@ -338,17 +333,14 @@ namespace BibliotecaMovil.Server.Migrations
                     b.Property<int>("IdUsuario")
                         .HasColumnType("int");
 
-                    b.Property<int?>("LibroIdLibro")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("UsuarioIdUsuario")
+                    b.Property<int>("PosicionCola")
                         .HasColumnType("int");
 
                     b.HasKey("IdReserva");
 
-                    b.HasIndex("LibroIdLibro");
+                    b.HasIndex("IdLibro");
 
-                    b.HasIndex("UsuarioIdUsuario");
+                    b.HasIndex("IdUsuario");
 
                     b.ToTable("Reservas", "dbo");
                 });
@@ -400,17 +392,11 @@ namespace BibliotecaMovil.Server.Migrations
                     b.Property<bool>("Pagada")
                         .HasColumnType("bit");
 
-                    b.Property<int?>("PrestamoIdPrestamo")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("UsuarioIdUsuario")
-                        .HasColumnType("int");
-
                     b.HasKey("IdSancion");
 
-                    b.HasIndex("PrestamoIdPrestamo");
+                    b.HasIndex("IdPrestamo");
 
-                    b.HasIndex("UsuarioIdUsuario");
+                    b.HasIndex("IdUsuario");
 
                     b.ToTable("Sanciones", "dbo");
                 });
@@ -489,31 +475,17 @@ namespace BibliotecaMovil.Server.Migrations
 
             modelBuilder.Entity("BibliotecaMovil.Server.Models.Libro", b =>
                 {
-                    b.HasOne("BibliotecaMovil.Server.Models.Autor", "Autor")
-                        .WithMany("Libros")
-                        .HasForeignKey("AutorIdAutor");
-
-                    b.HasOne("BibliotecaMovil.Server.Models.Categoria", null)
-                        .WithMany("Libros")
-                        .HasForeignKey("CategoriaIdCategoria");
-
-                    b.HasOne("BibliotecaMovil.Server.Models.Editorial", null)
-                        .WithMany("Libros")
-                        .HasForeignKey("EditorialIdEditorial");
-
                     b.HasOne("BibliotecaMovil.Server.Models.Categoria", "Categoria")
-                        .WithMany()
+                        .WithMany("Libros")
                         .HasForeignKey("IdCategoria")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("BibliotecaMovil.Server.Models.Editorial", "Editorial")
-                        .WithMany()
+                        .WithMany("Libros")
                         .HasForeignKey("IdEditorial")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
-
-                    b.Navigation("Autor");
 
                     b.Navigation("Categoria");
 
@@ -596,11 +568,15 @@ namespace BibliotecaMovil.Server.Migrations
                 {
                     b.HasOne("BibliotecaMovil.Server.Models.Libro", "Libro")
                         .WithMany("Reservas")
-                        .HasForeignKey("LibroIdLibro");
+                        .HasForeignKey("IdLibro")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("BibliotecaMovil.Server.Models.Usuario", "Usuario")
                         .WithMany("Reservas")
-                        .HasForeignKey("UsuarioIdUsuario");
+                        .HasForeignKey("IdUsuario")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Libro");
 
@@ -611,11 +587,15 @@ namespace BibliotecaMovil.Server.Migrations
                 {
                     b.HasOne("BibliotecaMovil.Server.Models.Prestamo", "Prestamo")
                         .WithMany("Sanciones")
-                        .HasForeignKey("PrestamoIdPrestamo");
+                        .HasForeignKey("IdPrestamo")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("BibliotecaMovil.Server.Models.Usuario", "Usuario")
                         .WithMany("Sanciones")
-                        .HasForeignKey("UsuarioIdUsuario");
+                        .HasForeignKey("IdUsuario")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.Navigation("Prestamo");
 
@@ -636,8 +616,6 @@ namespace BibliotecaMovil.Server.Migrations
             modelBuilder.Entity("BibliotecaMovil.Server.Models.Autor", b =>
                 {
                     b.Navigation("LibroAutores");
-
-                    b.Navigation("Libros");
                 });
 
             modelBuilder.Entity("BibliotecaMovil.Server.Models.Categoria", b =>

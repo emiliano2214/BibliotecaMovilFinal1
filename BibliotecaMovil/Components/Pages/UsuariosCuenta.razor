@@ -9,7 +9,7 @@
 @inject NavigationManager Nav
 
 <div style="background:#777FF5; min-height:100vh; display:flex; flex-direction:column;">
-    <!-- header (igual al tuyo) -->
+    <!-- header -->
     <div style="padding:40px 20px 10px 20px;display:grid;grid-template-columns:auto 1fr auto auto;column-gap:10px;align-items:flex-start;">
         <div style="width:80px; height:80px; background:white; display:flex; align-items:center; justify-content:center;">
             <div style="width:64px; height:64px; border-radius:32px; overflow:hidden; background:gray;">
@@ -20,9 +20,10 @@
         </div>
 
         <h1>Cuenta usuario</h1>
-        <div style="background:#0050FF; width:40px; height:40px; display:flex; align-items:center; justify-content:center;">
-            <span style="font-size:20px; font-weight:bold;">i</span>
-        </div>
+        <button @onclick="IrDetalle"
+                style="background:#0050FF;width:40px;height:40px;border:none;outline:none;box-shadow:none;padding:0;display:flex;align-items:center;justify-content:center;">
+            <span style="font-size:20px; font-weight:bold; color:white;">i</span>
+        </button>
 
         <NavLink href="/menu" style="text-decoration:none; color:black; display:block;">
             <div style="background:#0050FF; width:40px; height:40px; display:flex; align-items:center; justify-content:center; cursor:pointer;">
@@ -84,15 +85,10 @@
                         @(Guardando ? "Guardando..." : "Guardar cambios")
                     </button>
 
-                    <button type="button" @onclick="IrFormulario"
-                            style="background:#DDDDDD; color:black; border:none; padding:10px 14px; cursor:pointer;">
-                        Detalles completos
-                    </button>
                     <button type="button" @onclick="Resetear" disabled="@Guardando"
                             style="background:#DDDDDD; color:black; border:none; padding:10px 14px; cursor:pointer;">
                         Cancelar
                     </button>
-
                 </div>
             </EditForm>
 
@@ -109,13 +105,13 @@
 @code {
     private UsuarioPublicoDto? Usuario;
     private UsuarioActualizadoDto? Edit;
-    private const string CloudinaryBase = "https://res.cloudinary.com/dbbqddxcd/image/upload/";
-    private const string DefaultAvatarPath = "v1771518924/Avatar_p2iu85.png";
+
+    private const string DefaultAvatarUrl = "https://res.cloudinary.com/dbbqddxcd/image/upload/v1771518924/Avatar_p2iu85.png";
 
     private string AvatarUrl =>
         string.IsNullOrWhiteSpace(Usuario?.ImgUrl)
-            ? CloudinaryBase + DefaultAvatarPath
-            : CloudinaryBase + Usuario!.ImgUrl;
+            ? DefaultAvatarUrl
+            : Usuario!.ImgUrl;
 
     private bool Cargando = true;
     private bool Guardando = false;
@@ -129,13 +125,12 @@
 
         if (Usuario is not null)
         {
-            // Modelo editable (lo que se puede tocar)
             Edit = new UsuarioActualizadoDto
             {
                 IdUsuario = Usuario.IdUsuario,
                 Nombre = Usuario.Nombre,
                 Apellido = Usuario.Apellido,
-                IdRol = Usuario.IdRol,      // no editable desde UI
+                IdRol = Usuario.IdRol,
                 ImgUrl = Usuario.ImgUrl,
                 Activo = Usuario.Activo
             };
@@ -156,10 +151,9 @@
         Ok = false;
     }
 
-    private void IrFormulario()
+    private void IrDetalle()
     {
-        // En este ejemplo ya estamos en el formulario, pero si tuvieras una vista de "perfil" y un botón "Editar perfil",
-        Nav.NavigateTo("/usuario-form");
+        Nav.NavigateTo("/usuario-detalle");
     }
 
     private async Task Guardar()
@@ -170,7 +164,6 @@
         Mensaje = "";
         Ok = false;
 
-        // Normalización rápida
         Edit.Nombre = (Edit.Nombre ?? "").Trim();
         Edit.Apellido = string.IsNullOrWhiteSpace(Edit.Apellido) ? null : Edit.Apellido.Trim();
         Edit.ImgUrl = string.IsNullOrWhiteSpace(Edit.ImgUrl) ? null : Edit.ImgUrl.Trim();
@@ -184,14 +177,10 @@
             return;
         }
 
-        // Recargar desde API para reflejar lo persistido
         var recargado = await UsuarioService.GetByIdAsync(Usuario.IdUsuario);
         if (recargado is not null)
         {
             Usuario = recargado;
-
-            // (opcional) si tu Sesion cachea el usuario, actualizala acá
-            // await Sesion.SetUsuarioAsync(recargado);
 
             Edit.Nombre = Usuario.Nombre;
             Edit.Apellido = Usuario.Apellido;

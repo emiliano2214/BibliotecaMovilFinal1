@@ -25,15 +25,16 @@ public class ResenaRepository : IResenaRepository
                 IdResena = x.IdResena,
                 IdUsuario = x.IdUsuario,
                 IdLibro = x.IdLibro,
-                Titulo = null,
-                Contenido = x.Comentario,
+
+                // Título del libro reseñado
+                TituloLibro = x.Libro != null ? x.Libro.Titulo : null,
+
+                Comentario = x.Comentario,
                 Puntuacion = x.Puntuacion,
-                FechaCreacion = x.FechaResena,
-                FechaModificacion = null
+                FechaResena = x.FechaResena
             })
             .ToListAsync(ct);
     }
-
 
     public async Task<bool> CreateResenaAsync(ResenaDto resenaDto)
     {
@@ -41,13 +42,28 @@ public class ResenaRepository : IResenaRepository
         {
             IdUsuario = resenaDto.IdUsuario,
             IdLibro = resenaDto.IdLibro,
-            Comentario = resenaDto.Contenido,
-            Puntuacion = resenaDto.Puntuacion,     // si es null, queda null (igual que la columna)
-            FechaResena = DateTime.Now             // ✅ fecha real del servidor
+            Comentario = resenaDto.Comentario,   
+            Puntuacion = resenaDto.Puntuacion,
+            FechaResena = DateTime.Now
         };
 
         _context.Resenas.Add(resena);
         return await _context.SaveChangesAsync() > 0;
     }
 
+    public async Task<int?> GetLibroIdByTituloAsync(string titulo, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(titulo))
+            return null;
+
+        var t = titulo.Trim();
+
+        // busca por coincidencia parcial (Contains) y devuelve el primero
+        return await _context.Libros
+            .AsNoTracking()
+            .Where(l => l.Titulo.Contains(t))
+            .OrderBy(l => l.Titulo)
+            .Select(l => (int?)l.IdLibro)
+            .FirstOrDefaultAsync(ct);
+    }
 }

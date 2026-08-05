@@ -1,0 +1,230 @@
+@page "/reservas"
+@using BibliotecaMovil.Shared.DTOs
+@using BibliotecaMovil.Shared.Interfaces
+@using Microsoft.AspNetCore.Components.Routing
+@implements IDisposable
+
+@inject IReservaService ReservaService
+@inject NavigationManager Nav
+@inject BibliotecaMovil.Services.UsuarioSesionService Sesion
+
+<div style="background:#777FF5; min-height:100vh; display:flex; flex-direction:column;">
+
+    <!-- Header -->
+    <div style="padding:60px 20px 20px 20px; display:grid; grid-template-columns:1fr auto; align-items:flex-start;">
+        <div style="font-size:28px; font-weight:bold;">Reservas</div>
+        <NavLink href="/menu" style="text-decoration:none; color:black; display:block;">
+            <div style="background:#0050FF; padding:8px 6px; display:flex; flex-direction:column; gap:3px; cursor:pointer;">
+                <div style="height:2px; width:20px; background:black;"></div>
+                <div style="height:2px; width:20px; background:black;"></div>
+                <div style="height:2px; width:20px; background:black;"></div>
+            </div>
+        </NavLink>
+    </div>
+
+    <!-- Body -->
+    <div style="flex:1; background:white; padding:20px;">
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:10px;">
+            <div style="font-weight:bold; font-size:22px;">
+                @(esAdmin ? "Todas las Reservas" : "Mis Reservas")
+            </div>
+            <button @onclick="IrNuevaReserva"
+                    style="background:#0050FF; border:none; padding:10px 14px; font-weight:bold; cursor:pointer;">
+                + Nueva Reserva
+            </button>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(debugError))
+        {
+            <div style="background:#ffcccc; color:#600; padding:10px; border:2px solid red; margin:10px 0;">
+                <b>ERROR</b><br />@debugError
+            </div>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(mensaje))
+        {
+            <div style="background:#d1e7dd; color:#0f5132; padding:10px; border-radius:8px; margin-bottom:10px;">
+                @mensaje
+            </div>
+        }
+
+        @if (isLoading)
+        {
+            <div style="padding:12px; border:2px solid #777FF5; border-radius:8px;">Cargando reservas...</div>
+        }
+        else if (!string.IsNullOrWhiteSpace(error))
+        {
+            <div style="padding:12px; border:2px solid #ff3b3b; border-radius:8px; background:#ffecec;">
+                <div style="font-weight:bold;">Error</div>
+                <div style="font-size:14px;">@error</div>
+            </div>
+        }
+        else if (reservas.Count == 0)
+        {
+            <div style="padding:12px; border:2px dashed #777FF5; border-radius:8px;">
+                No hay reservas registradas.
+            </div>
+        }
+        else
+        {
+            @foreach (var r in reservas)
+            {
+                <div style="background:white; border-radius:12px; padding:14px 12px; margin-bottom:14px;
+                            display:flex; flex-direction:column; gap:8px; border:2px solid #777FF5;">
+
+                    <div style="font-weight:bold; font-size:20px;">@r.TituloLibro</div>
+
+                    @if (esAdmin)
+                    {
+                        <div style="font-size:14px; color:#555;">
+                            <b>Usuario:</b> @r.NombreUsuario
+                        </div>
+                    }
+
+                    <div style="font-size:14px;">
+                        <b>Reservado el:</b> @r.FechaReserva.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                    </div>
+
+                    @if (r.FechaExpiracion.HasValue)
+                    {
+                        <div style="font-size:14px;">
+                            <b>Expira:</b> @r.FechaExpiracion.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                        </div>
+                    }
+
+                    <div style="font-size:14px;">
+                        <b>Posicion en cola:</b> @r.PosicionCola
+                    </div>
+
+                    <!-- Badge estado -->
+                    <div style="width:fit-content; padding:6px 10px; border-radius:999px;
+                                font-weight:bold; font-size:13px;
+                                background-color:@FondoEstado(r.Estado);
+                                color:@ColorEstado(r.Estado);">
+                        @r.Estado
+                    </div>
+
+                    <!-- Aviso cuando el ejemplar ya esta disponible -->
+                    @if (r.Estado == "DISPONIBLE")
+                    {
+                        <div style="background:#fff3cd; color:#856404; padding:10px; border-radius:8px; font-size:14px;">
+                            Tenes un ejemplar disponible. Solicita el prestamo antes de que venza la reserva.
+                        </div>
+                    }
+
+                    <!-- Boton cancelar si esta activa -->
+                    @if (r.Estado == "PENDIENTE" || r.Estado == "DISPONIBLE")
+                    {
+                        <button @onclick="() => Cancelar(r)"
+                                style="background:#dc3545; border:none; color:white; padding:8px 12px;
+                                       border-radius:8px; font-weight:bold; cursor:pointer; width:fit-content;">
+                            Cancelar reserva
+                        </button>
+                    }
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    private bool isLoading = true;
+    private string? error;
+    private string? debugError;
+    private string? mensaje;
+
+    private bool esAdmin;
+    private int usuarioId;
+    private List<ReservaDto> reservas = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Nav.LocationChanged += OnLocationChanged;
+        await CargarAsync();
+    }
+
+    private async Task CargarAsync()
+    {
+        try
+        {
+            isLoading = true;
+            error = null;
+            debugError = null;
+
+            var usuario = await Sesion.ObtenerUsuarioAsync();
+            if (usuario is null) { Nav.NavigateTo("/"); return; }
+
+            esAdmin = usuario.NombreRol == "Admin";
+            usuarioId = usuario.IdUsuario;
+
+            reservas = esAdmin
+                ? await ReservaService.GetAllReservasAsync()
+                : await ReservaService.GetReservasByUsuarioIdAsync(usuarioId);
+        }
+        catch (Exception ex)
+        {
+            error = "No se pudieron cargar las reservas.";
+            debugError = ex.ToString();
+            reservas = new();
+        }
+        finally
+        {
+            isLoading = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task Cancelar(ReservaDto r)
+    {
+        try
+        {
+            mensaje = null;
+            error = null;
+
+            bool ok = esAdmin
+                ? await ReservaService.CancelarReservaAdminAsync(r.IdReserva)
+                : await ReservaService.CancelarReservaAsync(r.IdReserva);
+
+            if (!ok) { error = "No se pudo cancelar la reserva."; return; }
+
+            mensaje = $"Reserva de \"{r.TituloLibro}\" cancelada.";
+            await CargarAsync();
+        }
+        catch (Exception ex)
+        {
+            error = "Error al cancelar.";
+            debugError = ex.ToString();
+        }
+    }
+
+    private void IrNuevaReserva() => Nav.NavigateTo("/reserva-form");
+
+    private async void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        if (e.Location.Contains("/reservas", StringComparison.OrdinalIgnoreCase))
+            await InvokeAsync(CargarAsync);
+    }
+
+    private static string FondoEstado(string estado) => estado switch
+    {
+        "PENDIENTE"  => "#cfe2ff",
+        "DISPONIBLE" => "#fff3cd",
+        "COMPLETADA" => "#d1e7dd",
+        "CANCELADA"  => "#e2e3e5",
+        "EXPIRADA"   => "#f8d7da",
+        _            => "#e2e3e5"
+    };
+
+    private static string ColorEstado(string estado) => estado switch
+    {
+        "PENDIENTE"  => "#084298",
+        "DISPONIBLE" => "#856404",
+        "COMPLETADA" => "#0f5132",
+        "CANCELADA"  => "#41464b",
+        "EXPIRADA"   => "#b00020",
+        _            => "#41464b"
+    };
+
+    public void Dispose() => Nav.LocationChanged -= OnLocationChanged;
+}
